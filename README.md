@@ -67,13 +67,13 @@ Example:
 Input:
 
 ```
-username=john, nas=192.168.1.1, session_time=120
+username=john, nas=192.168.1.1, session_time=100
 ```
 
 Output:
 
 ```
-"user john connected from NAS 192.168.1.1 for 120 seconds and disconnected"
+"user john connected from NAS 192.168.1.1 for 100 seconds and disconnected"
 ```
 
 ---
