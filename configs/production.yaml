@@ -1,0 +1,34 @@
+app:
+  env: "production"
+
+logging:
+  level: "warn"
+  format: "json"
+  add_source: false
+
+pipeline:
+  workers: 16
+  queue_size: 2048
+  batch_size: 32
+
+storage:
+  raw:
+    backend: "file"
+    path: "/var/lib/sil/raw"
+  metadata:
+    backend: "postgres"
+    addr: "postgres://sil-metadata:5432"
+    database: "sil"
+  vector:
+    backend: "milvus"
+    addr: "milvus:19530"
+    collection: "sil_events"
+
+stream:
+  backend: "jetstream"
+  addr: "nats://nats:4222"
+  subject: "sil.raw.events"
+
+cache:
+  backend: "redis"
+  addr: "redis:6379"
