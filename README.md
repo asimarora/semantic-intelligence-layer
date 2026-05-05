@@ -1,6 +1,6 @@
 # Semantic Intelligence Layer (SIL)
 
-SIL is a **source-agnostic intelligence platform** that sits above event-producing systems such as **RAS**. It ingests structured events through source-specific adapters, normalizes them into a unified event model, generates semantic representations and embeddings, and exposes retrieval and analysis APIs for downstream applications, analysts, and future agentic systems.
+SIL is a **source-agnostic telecom-first network intelligence layer** that sits above event-producing systems such as **RAS**. It ingests structured events through source-specific adapters, normalizes them into a unified event model, generates semantic representations and embeddings, and exposes retrieval and analysis APIs for downstream applications, analysts, and future agentic systems.
 
 While the architecture is source-agnostic, the near-term product direction is **telecom-first**. RAS is the initial source because it provides a strong subscriber and session backbone that other telecom signals can attach to later.
 
