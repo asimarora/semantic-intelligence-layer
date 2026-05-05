@@ -2,6 +2,8 @@
 
 SIL is a **source-agnostic intelligence platform** that sits above event-producing systems such as **RAS**. It ingests structured events through source-specific adapters, normalizes them into a unified event model, generates semantic representations and embeddings, and exposes retrieval and analysis APIs for downstream applications, analysts, and future agentic systems.
 
+While the architecture is source-agnostic, the near-term product direction is **telecom-first**. RAS is the initial source because it provides a strong subscriber and session backbone that other telecom signals can attach to later.
+
 ## Repository status
 
 This repository currently captures the **target architecture and planned v1 design**.
@@ -33,6 +35,48 @@ Traditional telemetry systems are strong at deterministic ingestion and storage 
 - AI-assisted investigation
 
 SIL adds that missing intelligence layer without forcing upstream systems to change.
+
+## Telecom-first direction
+
+SIL is designed to be reusable across many domains, but its strongest early fit is telecom and service-provider operations.
+
+Early telecom value comes from turning isolated records into:
+
+- subscriber intelligence
+- session intelligence
+- network element correlation
+- blast-radius analysis
+- service-impact investigations
+- reusable operational memory
+
+Representative telecom questions SIL should eventually answer:
+
+- why is this subscriber repeatedly dropping sessions?
+- which NAS, site, or software version is impacting the most subscribers?
+- which short-session patterns correlate with DNS, DHCP, or auth failures?
+- which tickets match an active network-side incident?
+- which behaviors suggest fraud, abuse, or policy misconfiguration?
+
+## Why RAS is the right first source
+
+RAS is a strong first source because it already gives SIL the session backbone many telecom investigations need.
+
+1. **Subscriber and session identity**
+   RAS provides usernames and session identifiers that can anchor correlation.
+
+2. **Network edge context**
+   NAS information gives a direct join point into access-network devices and sites.
+
+3. **Session lifecycle**
+   Start, stop, and interim events reveal session behavior over time.
+
+4. **Usage characteristics**
+   Session duration and octet counters provide immediate behavioral signals.
+
+5. **Operationally safe ingestion**
+   Mirrored accounting traffic lets SIL start without changing the live auth plane.
+
+On its own, RAS already supports similarity search, anomaly scoring, and repeated-session analysis. Combined with carefully selected adjacent sources, it becomes the core join spine for deeper telecom intelligence.
 
 ## Design principles
 
@@ -73,6 +117,18 @@ Version 1 should focus on the minimum platform needed to make RAS data semantica
 - Autonomous remediation or infrastructure-changing actions
 - Full free-form LLM response generation as the main interface
 - Tight coupling to a single embedding model, vector store, or cloud vendor
+
+## Source expansion should be value-driven
+
+A new source should be added only if it improves one or more of these:
+
+- **entity linkage** between subscriber, session, IP, NAT mapping, network element, and case
+- **root-cause precision** for repeated drops, failed sessions, or degraded service
+- **customer-impact visibility** across tickets, regions, and affected subscriber groups
+- **operational actionability** so results can point to a device, policy, workflow, or team
+- **historical replay value** so the source is worth storing and reprocessing over time
+
+High-volume feeds that cannot be joined reliably to subscriber, session, device, or service entities should not be early priorities.
 
 ## End-to-end architecture
 
@@ -217,6 +273,56 @@ Representative queries:
 - `NAS devices showing abnormal behavior this week`
 - `show prior cases similar to this session signature`
 
+## High-value telecom sources after RAS
+
+Not every telecom feed adds the same value. The best next sources are the ones that make RAS more explainable, more actionable, and easier to correlate.
+
+| Source | Priority after RAS | Value added | Why it is worth integrating |
+| --- | --- | --- | --- |
+| **AAA auth / access logs** | Very high | Failed logins, reject reasons, policy context before accounting starts | Completes the RADIUS story and explains sessions that never become stable accounting records |
+| **DHCP / IPAM** | Very high | Subscriber-to-IP lease history | Essential for correlating sessions with IP lifecycle, DNS activity, abuse cases, and support workflows |
+| **BNG / BRAS / NAS syslogs and alarms** | Very high | Device-side failure evidence | Connects repeated session churn to real network-side faults instead of treating them as isolated subscriber issues |
+| **DNS resolver logs** | High | Service symptom visibility | Explains "connected but not working" cases and helps tie access sessions to application or reachability problems |
+| **Inventory / topology** | High | Site, region, vendor, software, and dependency context | Enables blast-radius analysis and issue grouping by hardware, software version, or location |
+| **CGNAT logs** | High | Subscriber-to-public-IP and port mapping | High value for abuse handling, forensics, and downstream service correlation |
+| **NetFlow / IPFIX / sFlow** | Medium-high | Traffic behavior and QoE clues | Helps distinguish idle churn, abnormal usage, congestion, and suspicious behavior patterns |
+| **CRM / trouble tickets** | Medium-high | Customer-impact and outcome loop | Links technical patterns to human impact and builds reusable operational memory |
+| **PCRF / PCF / OCS / charging** | Medium | Policy, quota, and charging context | Useful when throttling, quota exhaustion, or charging side effects are major causes of complaints |
+| **IMS / SIP / CDR / xDR** | Medium | Voice and service-specific intelligence | Important when SIL expands into mobile-core or voice-service investigations |
+
+## Suggested telecom expansion order
+
+For a general telecom or ISP rollout, the strongest sequence after RAS is:
+
+1. **AAA auth / access logs**
+2. **DHCP / IPAM**
+3. **BNG / BRAS / NAS syslogs and alarms**
+4. **DNS resolver logs**
+5. **Inventory / topology**
+6. **CGNAT logs**
+7. **NetFlow / IPFIX / sFlow**
+8. **CRM / trouble tickets**
+9. **PCRF / PCF / OCS / charging**
+10. **IMS / SIP / CDR / xDR**
+
+This order is based on correlation value, root-cause improvement, and operational usefulness.
+
+- If SIL stays focused on **fixed broadband**, DHCP, DNS, BNG alarms, and topology should be emphasized early.
+- If SIL expands faster into **mobile or voice**, policy, charging, IMS, and CDR/xDR should move up the list.
+
+## Core telecom entity model
+
+As SIL grows beyond RAS, the most important cross-source entities are:
+
+- subscriber or account
+- session
+- device or CPE or handset
+- IP lease and NAT mapping
+- network element, site, and region
+- service event
+- policy or charging state
+- incident or trouble ticket
+
 ## Data contracts
 
 SIL should keep multiple views of the same data for different jobs.
@@ -339,7 +445,7 @@ SIL is meant to evolve from a semantic retrieval platform into an AI-native inve
 
 ### Later
 
-- GraphRAG over entities such as user, session, NAS, IP, and event
+- GraphRAG over entities such as subscriber, session, NAS, IP, site, ticket, and network event
 - investigation agents that gather evidence across retrieval modes
 - root cause hypothesis generation
 - recommendation agents for runbooks and playbooks
@@ -351,7 +457,7 @@ SIL is meant to evolve from a semantic retrieval platform into an AI-native inve
 When SIL moves beyond retrieval, the highest-value ML additions are:
 
 1. **Streaming anomaly detection** for live telemetry and changing baselines
-2. **Behavioral clustering** for users, NAS devices, sessions, and traffic patterns
+2. **Behavioral clustering** for subscribers, NAS devices, sessions, and traffic patterns
 3. **Sequence modeling** for repeated lifecycle or disconnect patterns
 4. **Similarity learning** tailored to incident or session behavior, not just generic embeddings
 5. **Feedback learning** from analyst labels such as useful, false positive, same pattern, or different root cause
@@ -391,4 +497,4 @@ To be useful in production, SIL should be measured and governed explicitly.
 
 SIL is the platform layer that turns source telemetry into **semantic, retrievable, explainable intelligence**.
 
-It starts with **RAS as the first source**, but it is designed to support many sources over time. The near-term focus is a strong semantic ingestion and retrieval foundation. The long-term direction is an AI-native platform with memory, retrieval, ML, and carefully controlled agentic workflows.
+It starts with **RAS as the first source**, but it is designed to support many sources over time. In the near term, SIL is best understood as a **telecom-first subscriber, session, and network intelligence layer** with RAS as the initial correlation backbone. The long-term direction is an AI-native platform with memory, retrieval, ML, and carefully controlled agentic workflows.
