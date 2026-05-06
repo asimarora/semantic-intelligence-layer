@@ -1,0 +1,16 @@
+{
+  "username": "john",
+  "nas_ip_address": "192.168.1.1",
+  "nas_port": 42,
+  "acct_status_type": "Accounting-Stop",
+  "acct_session_id": "sess-001",
+  "framed_ip_address": "10.10.10.1",
+  "calling_station_id": "00-11-22-33-44-55",
+  "called_station_id": "bbng-01",
+  "timestamp": "2026-05-05T14:00:00Z",
+  "client_ip": "10.0.0.25",
+  "packet_type": "Accounting-Request",
+  "acct_input_octets": 12000,
+  "acct_output_octets": 54000,
+  "acct_session_time": 100
+}
