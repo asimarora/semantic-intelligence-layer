@@ -1,0 +1,32 @@
+app:
+  name: "semantic-intelligence-layer"
+
+logging:
+  level: "info"
+  format: "text"
+  add_source: false
+
+pipeline:
+  workers: 2
+  queue_size: 128
+  batch_size: 1
+
+ingest:
+  source_type: "ras"
+  input_path: "./testdata/ras"
+
+storage:
+  raw:
+    backend: "file"
+    path: "./var/raw"
+  metadata:
+    backend: "memory"
+  vector:
+    backend: "memory"
+
+stream:
+  backend: "disabled"
+  subject: "sil.raw.events"
+
+cache:
+  backend: "disabled"
