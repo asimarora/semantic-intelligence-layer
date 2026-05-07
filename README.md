@@ -1,4 +1,4 @@
-# Semantic Intelligence Layer (SIL)
+# Semantic Intelligence Layer (SIL) (Work Under Progress)
 
 SIL is a **source-agnostic telecom-first network intelligence layer** that sits above event-producing systems such as **RAS**. It ingests structured events through source-specific adapters, normalizes them into a unified event model, generates semantic representations and embeddings, and exposes retrieval and analysis APIs for downstream applications, analysts, and future agentic systems.
 
