@@ -54,10 +54,10 @@ SIL should preserve a clear split:
 
 This keeps ingestion reliable even when indexing, vector storage, or ML work is delayed.
 
-## Future agent harness
+## Agent harness
 
-The future agent harness sits **on top of** SIL, not inside the core data plane.
+The agent harness sits **on top of** SIL, not inside the core data plane.
 
 - SIL core remains useful without agents
-- agent workflows consume query, retrieval, and investigation capabilities
-- agent memory and approval logic remain separate from raw ingest and storage internals
+- Agent workflows consume query, retrieval, and investigation capabilities
+- Agent memory and approval logic remain separate from raw ingest and storage internals
