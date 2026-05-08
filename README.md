@@ -1,6 +1,6 @@
-# Semantic Intelligence Layer (SIL) (Work Under Progress)
+# Semantic Intelligence Layer (SIL) (Work in Progress)
 
-SIL is a **source-agnostic telecom-first network intelligence layer** that sits above event-producing systems such as **RAS**. It ingests structured events through source-specific adapters, normalizes them into a unified event model, generates semantic representations and embeddings, and exposes retrieval and analysis APIs for downstream applications, analysts, and future agentic systems.
+SIL is a **source-agnostic intelligence platform** that sits above event-producing systems such as **RAS**. It ingests structured events through source-specific adapters, normalizes them into a unified event model, generates semantic representations and embeddings, and exposes retrieval and analysis APIs for downstream applications, analysts, and future agentic systems.
 
 While the architecture is source-agnostic, the near-term product direction is **telecom-first**. RAS is the initial source because it provides a strong subscriber and session backbone that other telecom signals can attach to later.
 
@@ -392,34 +392,67 @@ SIL should keep multiple views of the same data for different jobs.
 
 ## Planned repository structure
 
-The likely first repo shape is a modular monolith, with adapters isolated at the edge and reusable core logic in the platform.
+The frozen base shape is a **service-oriented monorepo**: one repository, a small number of coarse-grained services, shared platform packages, and clear boundaries between source adapters, contracts, storage, and future messaging.
 
 ```text
 semantic-intelligence-layer/
 ├── README.md
-├── docs/
+├── compose.yaml
+├── Makefile
+├── cmd/
+│   ├── ingestd/
+│   ├── normalizerd/
+│   ├── indexerd/
+│   ├── apid/
+│   ├── backfill/
+│   └── agentd/
 ├── configs/
-├── schemas/
-├── apps/
-│   ├── api/
-│   ├── worker/
-│   └── backfill/
-├── src/
-│   └── sil/
-│       ├── adapters/
-│       │   └── radius/
-│       ├── ingestion/
-│       ├── normalization/
-│       ├── semantics/
-│       ├── embeddings/
-│       ├── storage/
-│       ├── retrieval/
-│       ├── ml/
-│       ├── agents/
-│       └── config/
-├── tests/
-└── deployments/
+│   ├── base.yaml
+│   ├── development.yaml
+│   ├── testing.yaml
+│   ├── staging.yaml
+│   └── production.yaml
+├── docs/
+├── deployments/
+│   ├── docker/
+│   ├── compose/
+│   └── k8s/
+├── migrations/
+├── scripts/
+├── specs/
+│   ├── events/
+│   ├── openapi/
+│   └── asyncapi/
+├── internal/
+│   ├── platform/
+│   │   ├── config/
+│   │   ├── logging/
+│   │   └── messaging/
+│   ├── contracts/
+│   │   ├── raw/
+│   │   └── unified/
+│   ├── adapters/
+│   │   └── radius/
+│   ├── agents/
+│   │   ├── harness/
+│   │   ├── tools/
+│   │   ├── memory/
+│   │   └── policy/
+│   ├── services/
+│   │   ├── ingest/
+│   │   ├── normalize/
+│   │   ├── index/
+│   │   └── query/
+│   └── storage/
+│       ├── raw/
+│       ├── metadata/
+│       └── vector/
+└── testdata/
 ```
+
+The `agents/` and `agentd/` scaffolds intentionally reserve space for a future agent harness on top of SIL. The initial contracts now cover run/session models, tool and memory boundaries, and a starter policy evaluator for read-only, approval-gated, and tenant-isolated actions, but they do **not** change the core rule that SIL's ingest, normalization, storage, and messaging layers remain useful without any agent runtime.
+
+The root `compose.yaml` is intended as a lightweight local infrastructure stack for development. It brings up shared dependencies such as NATS JetStream, Postgres, and Redis without forcing the whole runtime into Docker before the core services are ready.
 
 ## AI-native roadmap
 
