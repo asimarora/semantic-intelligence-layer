@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sil-modeld
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sil-modeld
+  template:
+    metadata:
+      labels:
+        app: sil-modeld
+    spec:
+      containers:
+        - name: modeld
+          image: ghcr.io/asimarora/semantic-intelligence-layer:modeld-latest
+          env:
+            - name: SIL_APP_ENV
+              value: production
+            - name: SIL_CONFIG_DIR
+              value: /app/configs
+          ports:
+            - containerPort: 8080
