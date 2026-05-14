@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sil-triton
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sil-triton
+  template:
+    metadata:
+      labels:
+        app: sil-triton
+    spec:
+      containers:
+        - name: triton
+          image: nvcr.io/nvidia/tritonserver:24.10-py3
+          args:
+            - "tritonserver"
+            - "--model-repository=/models"
+          ports:
+            - containerPort: 8000
+            - containerPort: 8001
