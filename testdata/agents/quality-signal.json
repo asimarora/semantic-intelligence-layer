@@ -1,0 +1,11 @@
+{
+  "signal_id": "quality-001",
+  "run_id": "run-001",
+  "step_id": "step-003",
+  "tenant_id": "default",
+  "signal_type": "retrieval_miss",
+  "severity": "warn",
+  "score": 0.12,
+  "description": "The agent produced a low-evidence answer candidate after three retrieval attempts.",
+  "occurred_at": "2026-05-13T06:00:00Z"
+}
