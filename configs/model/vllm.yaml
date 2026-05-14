@@ -1,0 +1,13 @@
+backend: "vllm"
+enabled: false
+display_name: "vLLM OpenAI-Compatible Runtime"
+base_url: "http://vllm:8000"
+api_style: "openai"
+default_model: "meta-llama/Llama-3.1-8B-Instruct"
+capabilities:
+  chat_completion: true
+  embeddings: false
+  classification: false
+timeouts:
+  request: "60s"
+  stream_idle: "30s"
