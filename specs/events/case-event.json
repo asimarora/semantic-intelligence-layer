@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sil/specs/events/case-event.json",
+  "title": "SIL Case Event",
+  "type": "object",
+  "required": [
+    "id",
+    "tenant_id",
+    "subject",
+    "status",
+    "priority",
+    "opened_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "customer_identity_id": { "type": "string" },
+    "primary_channel": { "type": "string" },
+    "subject": { "type": "string" },
+    "summary": { "type": "string" },
+    "status": { "enum": ["open", "pending", "resolved", "closed"] },
+    "priority": { "enum": ["low", "medium", "high", "critical"] },
+    "opened_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}
