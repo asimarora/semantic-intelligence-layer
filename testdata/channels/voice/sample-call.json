@@ -1,0 +1,10 @@
+{
+  "tenant_id": "default",
+  "call_id": "voice-call-001",
+  "message_id": "voice-msg-001",
+  "customer_id": "cust-1001",
+  "caller": "+12025550123",
+  "callee": "+18005550199",
+  "transcript": "My internet is down and I need help restoring service.",
+  "occurred_at": "2026-05-11T09:32:00Z"
+}
