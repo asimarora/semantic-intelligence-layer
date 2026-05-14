@@ -1,4 +1,4 @@
-# Semantic Intelligence Layer (SIL) (Work in Progress)
+# Semantic Intelligence Layer (SIL)
 
 SIL is a **source-agnostic intelligence platform** that sits above event-producing systems such as **RAS**. It ingests structured events through source-specific adapters, normalizes them into a unified event model, generates semantic representations and embeddings, and exposes retrieval and analysis APIs for downstream applications, analysts, and future agentic systems.
 
@@ -388,7 +388,33 @@ SIL should keep multiple views of the same data for different jobs.
     }
   ]
 }
-```
+
+The `transport/` packages are the private home for future external access
+surfaces such as structured APIs, chat, and A2A adapters. They sit behind
+`cmd/apid` or other entrypoints and should call shared services rather than
+re-implementing intelligence logic.
+
+The `channels/` packages are the omnichannel ingress layer for customer-facing
+entry points such as chat, email, voice, and messaging. They normalize channel
+payloads into SIL contracts without replacing the telecom evidence-source model
+under `internal/adapters/`.
+
+The outer repository shape also reserves a **model-serving plane**. `cmd/modeld`
+is the future inference gateway, `configs/models/` holds backend and routing
+profiles, and deployment/spec/testdata folders reserve space for **vLLM**,
+**Triton**, and later inference backends without forcing SIL to depend on any
+single runtime today.
+
+The repo now also reserves an **agent control-plane and monitoring shell**.
+`internal/agents/runtime`, `executor`, and `approvals` represent the bounded
+execution loop and approval flow; `internal/platform/telemetry` and
+`observability` reserve shared monitoring hooks; and the new metadata, event,
+migration, and fixture files reserve durable storage for agent runs, tool calls,
+retrieval misses, quality signals, and approval decisions.
+
+The `agents/` and `agentd/` scaffolds intentionally reserve space for a future agent harness on top of SIL. The initial contracts now cover run/session models, tool and memory boundaries, and a starter policy evaluator for read-only, approval-gated, and tenant-isolated actions, but they do **not** change the core rule that SIL's ingest, normalization, storage, and messaging layers remain useful without any agent runtime.
+
+The root `compose.yaml` is intended as a lightweight local infrastructure stack for development. It brings up shared dependencies such as NATS JetStream, Postgres, and Redis without forcing the whole runtime into Docker before the core services are ready.
 
 ## AI-native roadmap
 
