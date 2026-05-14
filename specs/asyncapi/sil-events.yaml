@@ -1,0 +1,30 @@
+asyncapi: 3.0.0
+info:
+  title: SIL Event Backbone
+  version: 0.1.0
+channels:
+  sil.raw.events:
+    address: sil.raw.events
+    messages:
+      radiusEvidence:
+        $ref: "#/components/messages/RadiusEvidence"
+  sil.interaction.events:
+    address: sil.interaction.events
+    messages:
+      inboundInteraction:
+        $ref: "#/components/messages/InboundInteraction"
+  sil.unified.events:
+    address: sil.unified.events
+    messages:
+      unifiedEvent:
+        summary: Future unified conversation, case, and evidence events.
+components:
+  messages:
+    RadiusEvidence:
+      name: RadiusEvidence
+      payload:
+        type: object
+    InboundInteraction:
+      name: InboundInteraction
+      payload:
+        $ref: "./../events/interaction-event.json"
