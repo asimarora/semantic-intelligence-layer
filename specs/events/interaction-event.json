@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sil/specs/events/interaction-event.json",
+  "title": "SIL Raw Interaction Event",
+  "type": "object",
+  "required": [
+    "event_id",
+    "schema_version",
+    "tenant_id",
+    "channel",
+    "provider",
+    "conversation_id",
+    "message_id",
+    "direction",
+    "occurred_at",
+    "received_at",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string" },
+    "schema_version": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "channel": { "enum": ["chat", "email", "voice", "messaging"] },
+    "provider": { "type": "string" },
+    "conversation_id": { "type": "string" },
+    "message_id": { "type": "string" },
+    "customer_id": { "type": "string" },
+    "case_id": { "type": "string" },
+    "direction": { "enum": ["inbound", "outbound"] },
+    "subject": { "type": "string" },
+    "body": { "type": "string" },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "received_at": { "type": "string", "format": "date-time" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "payload": {}
+  }
+}
