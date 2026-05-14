@@ -1,0 +1,54 @@
+name: sil-models
+
+services:
+  vllm:
+    profiles: ["models", "vllm"]
+    image: vllm/vllm-openai:latest
+    command:
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--model"
+      - "meta-llama/Llama-3.1-8B-Instruct"
+    ports:
+      - "8000:8000"
+    networks:
+      - sil-net
+
+  triton:
+    profiles: ["models", "triton"]
+    image: nvcr.io/nvidia/tritonserver:24.10-py3
+    command:
+      - "tritonserver"
+      - "--model-repository=/models"
+    ports:
+      - "8001:8000"
+      - "8002:8001"
+    volumes:
+      - triton-models:/models
+    networks:
+      - sil-net
+
+  modeld:
+    profiles: ["models"]
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: modeld
+    environment:
+      SIL_APP_ENV: development
+      SIL_CONFIG_DIR: /app/configs
+    depends_on:
+      - vllm
+      - triton
+    networks:
+      - sil-net
+
+volumes:
+  triton-models:
+
+networks:
+  sil-net:
+    driver: bridge
