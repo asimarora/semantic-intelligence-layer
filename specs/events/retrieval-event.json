@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sil/specs/events/retrieval-event.json",
+  "title": "SIL Retrieval Event",
+  "type": "object",
+  "required": ["event_id", "run_id", "tenant_id", "query_text", "hit_count", "occurred_at"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "step_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "query_text": { "type": "string" },
+    "hit_count": { "type": "integer", "minimum": 0 },
+    "top_score": { "type": "number" },
+    "degraded": { "type": "boolean" },
+    "occurred_at": { "type": "string", "format": "date-time" }
+  }
+}
