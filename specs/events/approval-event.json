@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sil/specs/events/approval-event.json",
+  "title": "SIL Approval Event",
+  "type": "object",
+  "required": ["approval_id", "run_id", "tenant_id", "decision", "occurred_at"],
+  "properties": {
+    "approval_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "step_id": { "type": "string" },
+    "tool_call_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "action_name": { "type": "string" },
+    "decision": { "type": "string", "enum": ["approved", "rejected", "expired"] },
+    "requested_by": { "type": "string" },
+    "decided_by": { "type": "string" },
+    "reason": { "type": "string" },
+    "occurred_at": { "type": "string", "format": "date-time" }
+  }
+}
