@@ -1,0 +1,11 @@
+{
+  "tenant_id": "default",
+  "thread_id": "email-thread-001",
+  "message_id": "email-msg-001",
+  "customer_id": "cust-1001",
+  "from": "customer@example.com",
+  "to": ["support@example.com"],
+  "subject": "Frequent disconnects",
+  "body": "Please check why my session drops every few minutes.",
+  "occurred_at": "2026-05-11T09:31:00Z"
+}
