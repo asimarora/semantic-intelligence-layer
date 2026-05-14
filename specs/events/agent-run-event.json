@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sil/specs/events/agent-run-event.json",
+  "title": "SIL Agent Run Event",
+  "type": "object",
+  "required": ["run_id", "tenant_id", "session_id", "status", "occurred_at"],
+  "properties": {
+    "run_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "case_id": { "type": "string" },
+    "session_id": { "type": "string" },
+    "goal": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "awaiting_approval", "completed", "failed"]
+    },
+    "runtime_name": { "type": "string" },
+    "occurred_at": { "type": "string", "format": "date-time" }
+  }
+}
