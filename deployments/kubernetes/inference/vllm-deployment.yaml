@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sil-vllm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sil-vllm
+  template:
+    metadata:
+      labels:
+        app: sil-vllm
+    spec:
+      containers:
+        - name: vllm
+          image: vllm/vllm-openai:latest
+          args:
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8000"
+            - "--model"
+            - "meta-llama/Llama-3.1-8B-Instruct"
+          ports:
+            - containerPort: 8000
