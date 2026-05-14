@@ -1,0 +1,10 @@
+{
+  "tenant_id": "default",
+  "conversation_id": "msg-conv-001",
+  "message_id": "msg-001",
+  "customer_id": "cust-1001",
+  "from": "+12025550123",
+  "to": "+18005550199",
+  "body": "Still facing disconnects after the reboot.",
+  "occurred_at": "2026-05-11T09:33:00Z"
+}
