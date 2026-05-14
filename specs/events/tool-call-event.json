@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sil/specs/events/tool-call-event.json",
+  "title": "SIL Tool Call Event",
+  "type": "object",
+  "required": ["tool_call_id", "run_id", "step_id", "tool_name", "status", "occurred_at"],
+  "properties": {
+    "tool_call_id": { "type": "string" },
+    "run_id": { "type": "string" },
+    "step_id": { "type": "string" },
+    "tenant_id": { "type": "string" },
+    "tool_name": { "type": "string" },
+    "status": { "type": "string" },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "latency_ms": { "type": "integer", "minimum": 0 },
+    "error_code": { "type": "string" },
+    "occurred_at": { "type": "string", "format": "date-time" }
+  }
+}
