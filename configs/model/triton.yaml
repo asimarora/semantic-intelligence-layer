@@ -1,0 +1,13 @@
+backend: "triton"
+enabled: false
+display_name: "NVIDIA Triton Inference Server"
+base_url: "http://triton:8000"
+grpc_addr: "triton:8001"
+default_model: "sil-embedder"
+capabilities:
+  chat_completion: false
+  embeddings: true
+  classification: true
+timeouts:
+  request: "30s"
+  stream_idle: "15s"
