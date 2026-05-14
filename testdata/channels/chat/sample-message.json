@@ -1,0 +1,9 @@
+{
+  "tenant_id": "default",
+  "conversation_id": "chat-conv-001",
+  "message_id": "chat-msg-001",
+  "customer_id": "cust-1001",
+  "sender_id": "user-1001",
+  "body": "My broadband is down and keeps disconnecting.",
+  "occurred_at": "2026-05-11T09:30:00Z"
+}
