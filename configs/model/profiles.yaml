@@ -1,0 +1,19 @@
+profiles:
+  summarize:
+    backend: "vllm"
+    model: "meta-llama/Llama-3.1-8B-Instruct"
+    temperature: 0.1
+    max_output_tokens: 1024
+  draft_reply:
+    backend: "vllm"
+    model: "meta-llama/Llama-3.1-8B-Instruct"
+    temperature: 0.3
+    max_output_tokens: 768
+  embed_context:
+    backend: "triton"
+    model: "sil-embedder"
+    batch_size: 32
+  classify_intent:
+    backend: "triton"
+    model: "sil-intent-classifier"
+    batch_size: 16
