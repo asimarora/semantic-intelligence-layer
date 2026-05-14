@@ -1,0 +1,36 @@
+openapi: 3.1.0
+info:
+  title: SIL Channel Ingress API
+  version: 0.1.0
+paths:
+  /healthz:
+    get:
+      summary: Health probe
+      responses:
+        "200":
+          description: Service is healthy
+  /readyz:
+    get:
+      summary: Readiness probe
+      responses:
+        "200":
+          description: Service is ready
+  /v1/channels/{channel}/webhook:
+    post:
+      summary: Accept inbound channel events
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [chat, email, voice, messaging]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "202":
+          description: Event accepted
