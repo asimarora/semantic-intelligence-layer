@@ -1,0 +1,11 @@
+{
+  "tenant_id": "default",
+  "case_id": "case-1001",
+  "session_id": "session-2001",
+  "goal": "Investigate repeated disconnects and propose the next best operator-safe action.",
+  "inputs": {
+    "channel": "chat",
+    "conversation_id": "chat-conv-001"
+  },
+  "max_steps": 8
+}
