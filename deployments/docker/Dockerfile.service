@@ -18,6 +18,7 @@ WORKDIR /app
 
 COPY --from=builder /out/service /app/service
 COPY configs /app/configs
+COPY testdata /app/testdata
 
 ENV CONFIG_DIR=/app/configs
 
