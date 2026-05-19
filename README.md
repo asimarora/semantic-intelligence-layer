@@ -6,9 +6,9 @@ While the architecture is source-agnostic, the near-term product direction is **
 
 ## Repository status
 
-This repository currently captures the **target architecture and planned v1 design**.
+This repository now contains the **target architecture plus the first working telecom pipeline slices**.
 
-- **Implementation status:** design/specification stage
+- **Implementation status:** early executable foundation with working raw RAS ingest and first-pass session normalization
 - **Initial source system:** RAS
 - **Primary v1 goal:** semantic ingestion and retrieval
 - **Not required in v1:** MCP server, autonomous remediation, full agent orchestration
@@ -390,7 +390,7 @@ SIL should keep multiple views of the same data for different jobs.
 }
 
 The `transport/` packages are the private home for future external access
-surfaces such as structured APIs, chat, and A2A adapters. They sit behind
+surfaces such as structured APIs, chat, MCP, and A2A adapters. They sit behind
 `cmd/apid` or other entrypoints and should call shared services rather than
 re-implementing intelligence logic.
 
@@ -411,6 +411,13 @@ execution loop and approval flow; `internal/platform/telemetry` and
 `observability` reserve shared monitoring hooks; and the new metadata, event,
 migration, and fixture files reserve durable storage for agent runs, tool calls,
 retrieval misses, quality signals, and approval decisions.
+
+The repo also now reserves **Temporal orchestration** and **MCP integration**
+shells. `internal/agents/runtime/temporal/` is the future durable workflow
+adapter, `internal/integrations/mcp/` is the outbound MCP client and registry
+area for backend systems, `internal/agents/tools/mcp/` is the bridge into the
+SIL tool registry, and `internal/transport/mcp/` reserves a future MCP-server
+surface if SIL later exposes its own tools outward.
 
 The `agents/` and `agentd/` scaffolds intentionally reserve space for a future agent harness on top of SIL. The initial contracts now cover run/session models, tool and memory boundaries, and a starter policy evaluator for read-only, approval-gated, and tenant-isolated actions, but they do **not** change the core rule that SIL's ingest, normalization, storage, and messaging layers remain useful without any agent runtime.
 
