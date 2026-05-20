@@ -5,6 +5,9 @@ logging:
   level: "warn"
   format: "text"
   add_source: false
+  async_enabled: false
+  async_queue_size: 256
+  flush_timeout: "2s"
 
 pipeline:
   workers: 1
