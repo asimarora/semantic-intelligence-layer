@@ -15,11 +15,15 @@ func main() {
                 os.Exit(1)
         }
 
-        logger, err := sillogging.New(cfg.App, cfg.Logging, "agentd", os.Stderr)
+        logRuntime, err := sillogging.New(cfg.App, cfg.Logging, "agentd", os.Stderr)
         if err != nil {
                 fmt.Fprintf(os.Stderr, "agentd logger failed: %v\n", err)
                 os.Exit(1)
         }
 
-        logger.Info("service scaffold ready")
+        logRuntime.Logger.Info("service scaffold ready")
+        if err := logRuntime.Close(); err != nil {
+                fmt.Fprintf(os.Stderr, "agentd logger shutdown failed: %v\n", err)
+                os.Exit(1)
+        }
 }
