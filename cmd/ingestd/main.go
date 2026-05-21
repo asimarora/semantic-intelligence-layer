@@ -38,7 +38,7 @@ func run(ctx context.Context) error {
                 return fmt.Errorf("radius source is not enabled in sources.enabled")
         }
 
-        logger, err := sillogging.New(cfg.App, cfg.Logging, "ingestd", os.Stderr)
+        logRuntime, err := sillogging.New(cfg.App, cfg.Logging, "ingestd", os.Stderr)
         if err != nil {
                 return err
         }
@@ -70,12 +70,15 @@ func run(ctx context.Context) error {
         }
 
         service := ingest.Service{
-                Logger:    logger,
+                Logger:    logRuntime.Logger,
                 Source:    sourceConfig,
                 Store:     store,
                 Publisher: publisher,
         }
         _, err = service.Run(ctx, sourceConfig.InputPath)
+        if closeErr := logRuntime.Close(); closeErr != nil && err == nil {
+                err = closeErr
+        }
         return err
 }
 
