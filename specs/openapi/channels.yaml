@@ -34,3 +34,83 @@ paths:
       responses:
         "202":
           description: Event accepted
+  /v1/sessions:
+    get:
+      summary: Retrieve normalized network session events
+      parameters:
+        - name: tenant_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: subscriber_id
+          in: query
+          schema:
+            type: string
+        - name: session_id
+          in: query
+          schema:
+            type: string
+        - name: nas_ip_address
+          in: query
+          schema:
+            type: string
+        - name: client_ip_address
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Matching normalized session events
+  /v1/retrieve:
+    post:
+      summary: Retrieve indexed tenant evidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenant_id, query]
+              properties:
+                tenant_id:
+                  type: string
+                query:
+                  type: string
+                subscriber_id:
+                  type: string
+                session_id:
+                  type: string
+                status:
+                  type: string
+                nas_ip_address:
+                  type: string
+                client_ip_address:
+                  type: string
+                from:
+                  type: string
+                  format: date-time
+                to:
+                  type: string
+                  format: date-time
+                limit:
+                  type: integer
+                  minimum: 1
+      responses:
+        "200":
+          description: Matching indexed evidence hits
