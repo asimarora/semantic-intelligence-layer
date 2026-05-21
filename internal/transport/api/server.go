@@ -5,9 +5,11 @@ import (
         "log/slog"
         "net/http"
 
+        agentharness "github.com/asimarora/semantic-intelligence-layer/internal/agents/harness"
         channelcommon "github.com/asimarora/semantic-intelligence-layer/internal/channels/common"
         silconfig "github.com/asimarora/semantic-intelligence-layer/internal/platform/config"
         sessionquery "github.com/asimarora/semantic-intelligence-layer/internal/services/query"
+        agentmetadata "github.com/asimarora/semantic-intelligence-layer/internal/storage/metadata/agents"
         retrievalmetadata "github.com/asimarora/semantic-intelligence-layer/internal/storage/metadata/retrieval"
         sessionmetadata "github.com/asimarora/semantic-intelligence-layer/internal/storage/metadata/sessions"
         "github.com/asimarora/semantic-intelligence-layer/internal/transport/webhook"
@@ -46,6 +48,23 @@ func NewServer(cfg *silconfig.Config, logger *slog.Logger) (*http.Server, error)
                 retrievalService, retrievalInitErr = sessionquery.NewRetrievalService(retrievalStore)
         }
         registerRetrievalRoutes(mux, logger, retrievalService, retrievalInitErr)
+
+        agentStore, agentInitErr := agentmetadata.NewStore(cfg.Storage.Metadata)
+        var agentService *agentharness.Service
+        if agentInitErr == nil {
+                switch {
+                case retrievalInitErr != nil:
+                        agentInitErr = retrievalInitErr
+                default:
+                        agentService, agentInitErr = agentharness.NewService(agentharness.Dependencies{
+                                Logger:    logger,
+                                Runs:      agentStore,
+                                Retrieval: retrievalService,
+                                Sessions:  sessionService,
+                        })
+                }
+        }
+        registerAgentRoutes(mux, logger, agentService, agentInitErr)
 
         if err := webhook.Register(mux, logger, registry, int64(cfg.Channels.RequestBodyLimitBytes)); err != nil {
                 return nil, err
