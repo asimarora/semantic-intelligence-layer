@@ -1,0 +1,31 @@
+receivers:
+  filelog/sil:
+    include:
+      - /var/log/sil/*.jsonl
+    start_at: beginning
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    send_batch_size: 1024
+    timeout: 5s
+
+exporters:
+  debug:
+    verbosity: normal
+
+service:
+  pipelines:
+    logs/filelog:
+      receivers: [filelog/sil]
+      processors: [batch]
+      exporters: [debug]
+    logs/otlp:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
