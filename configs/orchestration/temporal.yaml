@@ -1,0 +1,13 @@
+enabled: false
+display_name: "Temporal Orchestration"
+address: "temporal:7233"
+namespace: "sil"
+task_queue: "sil-agent-runs"
+identity: "agentd"
+workflows:
+  agent_run: "sil.agent.run"
+  approval_wait: "sil.agent.approval"
+budgets:
+  run_timeout: "15m"
+  step_timeout: "2m"
+  heartbeat_timeout: "30s"
