@@ -1,0 +1,15 @@
+enabled: false
+default_timeout: "15s"
+servers:
+  - name: "tickets"
+    transport: "streamable_http"
+    url: "https://tickets.example.internal/mcp"
+    auth: "oauth2"
+    tool_prefix: "ticket."
+    requires_approval: true
+  - name: "inventory"
+    transport: "streamable_http"
+    url: "https://inventory.example.internal/mcp"
+    auth: "mtls"
+    tool_prefix: "inventory."
+    requires_approval: false
