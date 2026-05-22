@@ -1,0 +1,9 @@
+id: "radius"
+kind: "radius"
+enabled: true
+tenant_id: "default"
+display_name: "RADIUS Accounting"
+provider: "radius-accounting-server"
+input_path: "./testdata/ras"
+schema_version: "sil.evidence.radius.v1"
+subject: "sil.raw.events"
