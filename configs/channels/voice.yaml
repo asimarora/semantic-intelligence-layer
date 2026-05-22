@@ -1,0 +1,9 @@
+id: "voice"
+kind: "voice"
+enabled: true
+tenant_id: "default"
+display_name: "Support Voice"
+provider: "voice-gateway"
+webhook_path: "/v1/channels/voice/webhook"
+record_calls: true
+require_transcript: false
