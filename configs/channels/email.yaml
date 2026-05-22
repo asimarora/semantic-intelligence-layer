@@ -1,0 +1,9 @@
+id: "email"
+kind: "email"
+enabled: true
+tenant_id: "default"
+display_name: "Support Email"
+provider: "smtp-ingress"
+webhook_path: "/v1/channels/email/webhook"
+allow_attachments: true
+max_attachment_mb: 20
