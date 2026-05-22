@@ -1,0 +1,5 @@
+{
+  "profile": "summarize",
+  "tenant_id": "default",
+  "input": "Summarize the subscriber's recent disconnect pattern and likely next troubleshooting steps."
+}
