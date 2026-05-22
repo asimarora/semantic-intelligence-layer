@@ -1,0 +1,8 @@
+id: "messaging"
+kind: "messaging"
+enabled: true
+tenant_id: "default"
+display_name: "Support Messaging"
+provider: "messaging-gateway"
+webhook_path: "/v1/channels/messaging/webhook"
+thread_window: "72h"
