@@ -1,0 +1,9 @@
+id: "chat"
+kind: "chat"
+enabled: true
+tenant_id: "default"
+display_name: "Support Chat"
+provider: "web-widget"
+webhook_path: "/v1/channels/chat/webhook"
+session_idle_timeout: "30m"
+allow_bot: true
