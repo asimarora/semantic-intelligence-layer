@@ -1,0 +1,8 @@
+{
+  "profile": "embed_context",
+  "tenant_id": "default",
+  "input": [
+    "radius stop cause session timeout",
+    "customer reported repeated disconnects over chat"
+  ]
+}
