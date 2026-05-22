@@ -1,0 +1,9 @@
+id: "access"
+kind: "access"
+enabled: true
+tenant_id: "default"
+display_name: "AAA Access Logs"
+provider: "aaa-access-gateway"
+input_path: "./testdata/access"
+schema_version: "sil.evidence.access.v1"
+subject: "sil.raw.events"
