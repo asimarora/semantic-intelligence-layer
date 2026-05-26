@@ -11,10 +11,16 @@ pipeline:
   queue_size: 64
   batch_size: 1
 
+sources:
+  enabled:
+    - "radius"
+    - "access"
+
 storage:
   raw:
     path: "./var/development/raw"
   metadata:
-    backend: "memory"
+    backend: "file"
+    path: "./var/development/metadata"
   vector:
     backend: "memory"

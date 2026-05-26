@@ -28,7 +28,7 @@ Implemented end-to-end:
 - session projection store under `internal/storage/metadata/sessions`
 - session query API: `GET /v1/sessions`
 - indexed retrieval via `cmd/indexerd`
-- retrieval API: `POST /v1/retrieve`
+- retrieval API: `POST /v1/retrieve` (read-only search with structured JSON filters)
 - invoked investigation runs:
   - `POST /v1/agent-runs`
   - `GET /v1/agent-runs/{run_id}`
@@ -36,7 +36,7 @@ Implemented end-to-end:
 
 ### 2. AAA auth / access logs
 
-Implemented end-to-end through structured query:
+Implemented end-to-end through retrieval and investigation evidence:
 
 - source config: `configs/sources/access.yaml`
 - raw ingest adapter: `internal/adapters/access`
@@ -45,6 +45,9 @@ Implemented end-to-end through structured query:
 - normalization service: `internal/services/accessnormalize`
 - access projection store: `internal/storage/metadata/access`
 - access query API: `GET /v1/access-events`
+- indexed retrieval via `cmd/indexerd`
+- retrieval API exposure: `POST /v1/retrieve` (read-only search with structured JSON filters)
+- investigation evidence via `POST /v1/agent-runs`
 
 ### 3. Logging
 
@@ -65,36 +68,38 @@ Key code:
 
 - Tenant isolation is currently **strong logical isolation**, not hard physical isolation.
 - Retrieval is currently **deterministic lexical retrieval**, not vector-backed yet.
+- Retrieval uses `POST /v1/retrieve` for **read-only search** because the request body carries structured query filters.
 - The first agent flow is **deterministic and read-only**.
 - `agentd` currently runs as a **polling watcher daemon** for repeated short-session disconnect detection.
 - Local development uses **file-backed metadata** so separate processes can share projected state.
+- Development now enables both `radius` and `access` sources so a single local demo can seed cross-source evidence.
+- `apid` now serves a **WebSocket chat demo** at `/chat` backed by the same deterministic investigation core as `POST /v1/agent-runs`.
 
 ## Most important current gap
 
-**AAA auth/access events are normalized and queryable, but they are not yet threaded into indexed retrieval or the investigation harness.**
+**The harness can now correlate access and session timelines and the chat demo can exercise it, but watcher and A2A layers still lag behind that reasoning core.**
 
 That means:
 
-- `indexerd` still only builds retrieval documents from normalized session events
-- `POST /v1/retrieve` still effectively searches session-derived evidence
-- the current investigation harness does not use access auth failures/challenges as first-class evidence
+- `POST /v1/retrieve` returns both session and access evidence, but ranking is still deterministic lexical retrieval
+- `POST /v1/agent-runs` now enriches directly from normalized access and normalized session stores, then produces a deterministic correlated summary for the current window
+- `/chat` now provides a browser-based WebSocket test interface over the same bounded investigation flow
+- `agentd` still triggers on session-only repeated short disconnect logic rather than the richer cross-source patterns now available in the harness
 
 ## Best next task
 
 The best next implementation step is:
 
-1. extend retrieval/indexing to include normalized access events
-2. expose those access-derived documents through existing retrieval flows
-3. enrich the investigation harness so auth failures, challenges, and policy decisions become agent evidence
+1. reuse the harness correlation logic inside watcher rules
+2. expose that same shared reasoning core through an A2A transport without splitting it by interface
+3. improve the bounded question layer so chat/A2A can answer common operator asks with lighter-weight routing when a full investigation is unnecessary
 
 Good starting files:
 
-- `internal/services/index/service.go`
-- `internal/contracts/unified/retrieval/types.go`
-- `internal/services/query/retrieval.go`
 - `internal/agents/harness/investigation.go`
-- `internal/storage/metadata/access/store.go`
-- `internal/services/accessnormalize/service.go`
+- `internal/agents/runtime/daemon.go`
+- `internal/transport/a2a/doc.go`
+- `internal/transport/chat/handler.go`
 
 ## Working rules for this repo
 
@@ -118,7 +123,7 @@ go build ./...
 
 ```bash
 go run ./cmd/ingestd
-go run ./cmd/normalizerd
+go run ./cmd/normalized
 go run ./cmd/indexerd
 go run ./cmd/apid
 go run ./cmd/agentd --once
@@ -128,15 +133,32 @@ go run ./cmd/agentd --once
 
 ```bash
 SIL_INGEST_SOURCE_TYPE=access SIL_INGEST_INPUT_PATH=./testdata/access go run ./cmd/ingestd
-SIL_INGEST_SOURCE_TYPE=access SIL_INGEST_INPUT_PATH=./testdata/access go run ./cmd/normalizerd
+SIL_INGEST_SOURCE_TYPE=access SIL_INGEST_INPUT_PATH=./testdata/access go run ./cmd/normalized
+SIL_INGEST_SOURCE_TYPE=access SIL_INGEST_INPUT_PATH=./testdata/access go run ./cmd/indexerd
 curl -s "http://localhost:8080/v1/access-events?tenant_id=default&subscriber_id=john"
+```
+
+### Cross-source demo flow
+
+```bash
+make demo-cross-source-prepare
+go run ./cmd/apid
+curl -s "http://localhost:8080/v1/access-events?tenant_id=default&subscriber_id=john"
+curl -s "http://localhost:8080/v1/sessions?tenant_id=default&subscriber_id=john"
+curl -s -X POST "http://localhost:8080/v1/retrieve" \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"default","query":"invalid password","subscriber_id":"john","limit":5}'
+curl -s -X POST "http://localhost:8080/v1/agent-runs" \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"default","goal":"Did john fail auth before connecting?","query":"john invalid password then connected","filters":{"subscriber_id":"john"},"max_steps":4}'
+open http://localhost:8080/chat
 ```
 
 ## Important files to read first
 
 - `README.md`
 - `cmd/ingestd/main.go`
-- `cmd/normalizerd/main.go`
+- `cmd/normalized/main.go`
 - `cmd/indexerd/main.go`
 - `cmd/apid/main.go`
 - `cmd/agentd/main.go`
@@ -149,5 +171,5 @@ curl -s "http://localhost:8080/v1/access-events?tenant_id=default&subscriber_id=
 If resuming work after a gap, assume the repo is currently at:
 
 - RADIUS accounting: indexed + retrievable + agent-consumable
-- AAA auth/access: normalized + projected + queryable
-- next milestone: **make access events retrievable and agent-consumable**
+- AAA auth/access: normalized + projected + indexed + retrievable + agent-consumable
+- next milestone: **correlate access auth evidence with session outcomes inside the harness**

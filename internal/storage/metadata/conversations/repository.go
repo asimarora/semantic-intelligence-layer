@@ -1,12 +1,12 @@
 package conversations
 
 import (
-        stdcontext "context"
+	stdcontext "context"
 
-        conversationcontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/unified/conversations"
+	conversationcontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/unified/conversations"
 )
 
 type Repository interface {
-        Upsert(stdcontext.Context, conversationcontracts.Conversation) error
-        Get(stdcontext.Context, tenantID, conversationID string) (*conversationcontracts.Conversation, error)
+	Upsert(ctx stdcontext.Context, value conversationcontracts.Conversation) error
+	Get(ctx stdcontext.Context, tenantID string, conversationID string) (*conversationcontracts.Conversation, error)
 }

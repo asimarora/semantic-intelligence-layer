@@ -5,6 +5,7 @@ DOCKER_COMPOSE ?= $(shell if docker compose version >/dev/null 2>&1; then printf
 
 ROOT_COMPOSE_FILE ?= compose.yaml
 LOCAL_COMPOSE_FILE ?= deployments/compose/local.yaml
+DEMO_COMPOSE_FILE ?= deployments/compose/demo.yaml
 MODEL_COMPOSE_FILE ?= deployments/compose/models.yaml
 
 SERVICE_DIRS := ingestd normalized indexerd apid agentd backfill modeld
@@ -19,6 +20,8 @@ endef
 
 .PHONY: help tidy fmt test build compile check build-bins clean \
 	dev-up dev-down dev-logs dev-ps \
+	demo-up demo-down demo-logs demo-ps \
+	demo-cross-source-prepare demo-cross-source \
 	dev-full-up dev-app-up dev-full-down \
 	models-up models-down run-%
 
@@ -33,6 +36,12 @@ help:
 	@printf "  %-18s %s\n" "run-<service>" "Run a cmd/<service> entrypoint, e.g. make run-apid"
 	@printf "  %-18s %s\n" "dev-up" "Start the minimal root Docker infrastructure stack"
 	@printf "  %-18s %s\n" "dev-down" "Stop the minimal root Docker infrastructure stack"
+	@printf "  %-18s %s\n" "demo-up" "Build and start the self-contained demo API stack"
+	@printf "  %-18s %s\n" "demo-down" "Stop the self-contained demo API stack"
+	@printf "  %-18s %s\n" "demo-logs" "Tail logs for the self-contained demo API stack"
+	@printf "  %-18s %s\n" "demo-ps" "Show status for the self-contained demo API stack"
+	@printf "  %-18s %s\n" "demo-cross-source-prepare" "Seed local access+session demo data"
+	@printf "  %-18s %s\n" "demo-cross-source" "Seed local access+session demo data and start apid"
 	@printf "  %-18s %s\n" "dev-full-up" "Start the richer local Docker stack infrastructure"
 	@printf "  %-18s %s\n" "dev-app-up" "Build and start the richer local Docker app profile"
 	@printf "  %-18s %s\n" "dev-full-down" "Stop the richer local Docker stack"
@@ -83,6 +92,34 @@ dev-logs:
 dev-ps:
 	$(call require_docker_compose)
 	$(DOCKER_COMPOSE) -f $(ROOT_COMPOSE_FILE) ps
+
+demo-up:
+	$(call require_docker_compose)
+	$(DOCKER_COMPOSE) -f $(DEMO_COMPOSE_FILE) up -d --build
+
+demo-down:
+	$(call require_docker_compose)
+	$(DOCKER_COMPOSE) -f $(DEMO_COMPOSE_FILE) down
+
+demo-logs:
+	$(call require_docker_compose)
+	$(DOCKER_COMPOSE) -f $(DEMO_COMPOSE_FILE) logs -f
+
+demo-ps:
+	$(call require_docker_compose)
+	$(DOCKER_COMPOSE) -f $(DEMO_COMPOSE_FILE) ps
+
+demo-cross-source-prepare:
+	rm -rf var/development
+	SIL_APP_ENV=development SIL_SOURCES_ENABLED=radius,access SIL_INGEST_SOURCE_TYPE=access SIL_INGEST_INPUT_PATH=./testdata/access $(GO) run ./cmd/ingestd
+	SIL_APP_ENV=development SIL_SOURCES_ENABLED=radius,access SIL_INGEST_SOURCE_TYPE=access SIL_INGEST_INPUT_PATH=./testdata/access $(GO) run ./cmd/normalized
+	SIL_APP_ENV=development SIL_SOURCES_ENABLED=radius,access SIL_INGEST_SOURCE_TYPE=access SIL_INGEST_INPUT_PATH=./testdata/access $(GO) run ./cmd/indexerd
+	SIL_APP_ENV=development SIL_SOURCES_ENABLED=radius,access SIL_INGEST_SOURCE_TYPE=ras SIL_INGEST_INPUT_PATH=./testdata/ras $(GO) run ./cmd/ingestd
+	SIL_APP_ENV=development SIL_SOURCES_ENABLED=radius,access SIL_INGEST_SOURCE_TYPE=ras SIL_INGEST_INPUT_PATH=./testdata/ras $(GO) run ./cmd/normalized
+	SIL_APP_ENV=development SIL_SOURCES_ENABLED=radius,access SIL_INGEST_SOURCE_TYPE=ras SIL_INGEST_INPUT_PATH=./testdata/ras $(GO) run ./cmd/indexerd
+
+demo-cross-source: demo-cross-source-prepare
+	SIL_APP_ENV=development SIL_SOURCES_ENABLED=radius,access $(GO) run ./cmd/apid
 
 dev-full-up:
 	$(call require_docker_compose)

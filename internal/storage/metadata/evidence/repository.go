@@ -1,12 +1,12 @@
 package evidence
 
 import (
-        stdcontext "context"
+	stdcontext "context"
 
-        evidencecontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/raw/evidence"
+	evidencecontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/raw/evidence"
 )
 
 type Repository interface {
-        Append(stdcontext.Context, evidencecontracts.Record) error
-        ListBySourceKey(stdcontext.Context, tenantID, source, sourceKey string, limit int) ([]evidencecontracts.Record, error)
+	Append(ctx stdcontext.Context, value evidencecontracts.Record) error
+	ListBySourceKey(ctx stdcontext.Context, tenantID string, source string, sourceKey string, limit int) ([]evidencecontracts.Record, error)
 }

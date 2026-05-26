@@ -1,12 +1,12 @@
 package interactions
 
 import (
-        stdcontext "context"
+	stdcontext "context"
 
-        interactioncontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/unified/interactions"
+	interactioncontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/unified/interactions"
 )
 
 type Repository interface {
-        Append(stdcontext.Context, interactioncontracts.Interaction) error
-        ListByConversation(stdcontext.Context, tenantID, conversationID string, limit int) ([]interactioncontracts.Interaction, error)
+	Append(ctx stdcontext.Context, value interactioncontracts.Interaction) error
+	ListByConversation(ctx stdcontext.Context, tenantID string, conversationID string, limit int) ([]interactioncontracts.Interaction, error)
 }

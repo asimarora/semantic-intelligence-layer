@@ -80,6 +80,11 @@ paths:
   /v1/retrieve:
     post:
       summary: Retrieve indexed tenant evidence
+      description: >
+        Read-only evidence search endpoint. This API uses POST because retrieval
+        accepts a structured JSON body containing the free-text query plus
+        optional filters such as subscriber, session, status, outcome, IP
+        addresses, and time range. It does not create a resource.
       requestBody:
         required: true
         content:

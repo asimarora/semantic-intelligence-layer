@@ -1,13 +1,13 @@
 package identities
 
 import (
-        stdcontext "context"
+	stdcontext "context"
 
-        identitycontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/unified/identities"
+	identitycontracts "github.com/asimarora/semantic-intelligence-layer/internal/contracts/unified/identities"
 )
 
 type Repository interface {
-        Upsert(stdcontext.Context, identitycontracts.Identity) error
-        Get(stdcontext.Context, tenantID, identityID string) (*identitycontracts.Identity, error)
-        FindByIdentifier(stdcontext.Context, tenantID, identifierType, identifierValue string) (*identitycontracts.Identity, error)
+	Upsert(ctx stdcontext.Context, value identitycontracts.Identity) error
+	Get(ctx stdcontext.Context, tenantID string, identityID string) (*identitycontracts.Identity, error)
+	FindByIdentifier(ctx stdcontext.Context, tenantID string, identifierType string, identifierValue string) (*identitycontracts.Identity, error)
 }

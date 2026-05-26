@@ -67,16 +67,18 @@ services:
       - nats
       - postgres
       - redis
+    volumes:
+      - app-data:/app/var
     networks:
       - sil-net
 
-  normalizerd:
+  normalized:
     profiles: ["app"]
     build:
       context: ../..
       dockerfile: deployments/docker/Dockerfile.service
       args:
-        SERVICE_NAME: normalizerd
+        SERVICE_NAME: normalized
     environment:
       SIL_APP_ENV: development
       SIL_CONFIG_DIR: /app/configs
@@ -84,6 +86,27 @@ services:
       - nats
       - postgres
       - redis
+    volumes:
+      - app-data:/app/var
+    networks:
+      - sil-net
+
+  indexerd:
+    profiles: ["app"]
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: indexerd
+    environment:
+      SIL_APP_ENV: development
+      SIL_CONFIG_DIR: /app/configs
+    depends_on:
+      - nats
+      - postgres
+      - redis
+    volumes:
+      - app-data:/app/var
     networks:
       - sil-net
 
@@ -101,10 +124,32 @@ services:
       - nats
       - postgres
       - redis
+    volumes:
+      - app-data:/app/var
+    networks:
+      - sil-net
+
+  agentd:
+    profiles: ["app"]
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: agentd
+    environment:
+      SIL_APP_ENV: development
+      SIL_CONFIG_DIR: /app/configs
+    depends_on:
+      - nats
+      - postgres
+      - redis
+    volumes:
+      - app-data:/app/var
     networks:
       - sil-net
 
 volumes:
+  app-data:
   nats-data:
   postgres-data:
   redis-data:
