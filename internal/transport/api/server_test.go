@@ -433,7 +433,7 @@ func TestNewServerRunsCorrelatedAgentInvestigations(t *testing.T) {
 	}
 }
 
-func TestNewServerServesWebSocketChatInterface(t *testing.T) {
+func TestNewServerServesChatAndA2AInterfaces(t *testing.T) {
 	metadataPath := t.TempDir()
 	accessStore, err := accessmetadata.NewStore(silconfig.StoreConfig{
 		Backend: "file",
@@ -729,8 +729,11 @@ func TestNewServerServesWebSocketChatInterface(t *testing.T) {
 	if strings.HasPrefix(statusResult.ShortAnswer, "Investigated goal") {
 		t.Fatalf("expected status short answer instead of generic summary, got %#v", statusResult)
 	}
-	if len(statusResult.Steps) != 4 || !strings.Contains(statusResult.Steps[0].Summary, `query "john session status connected disconnected latest"`) {
-		t.Fatalf("expected bounded status query rewrite, got %#v", statusResult)
+	if len(statusResult.Steps) != 3 {
+		t.Fatalf("expected lighter three-step status route, got %#v", statusResult)
+	}
+	if statusResult.Steps[0].ToolName != "query.sessions.search" {
+		t.Fatalf("expected status route to start with session enrichment, got %#v", statusResult)
 	}
 
 	if err := connection.WriteJSON(map[string]any{
@@ -772,8 +775,8 @@ func TestNewServerServesWebSocketChatInterface(t *testing.T) {
 	if strings.HasPrefix(tenantResult.ShortAnswer, "Investigated goal") {
 		t.Fatalf("expected tenant short answer instead of generic summary, got %#v", tenantResult)
 	}
-	if len(tenantResult.Steps) != 4 || !strings.Contains(tenantResult.Steps[0].Summary, `query "john subscriber tenant membership"`) {
-		t.Fatalf("expected bounded tenant query rewrite, got %#v", tenantResult)
+	if len(tenantResult.Steps) != 2 || !strings.Contains(tenantResult.Steps[0].Summary, `query "john subscriber tenant membership"`) {
+		t.Fatalf("expected lighter retrieval-only tenant route, got %#v", tenantResult)
 	}
 
 	if err := connection.WriteJSON(map[string]any{
@@ -810,6 +813,77 @@ func TestNewServerServesWebSocketChatInterface(t *testing.T) {
 	}
 	if strings.HasPrefix(unsupportedResult.ShortAnswer, "Investigated goal") {
 		t.Fatalf("expected unsupported-question short answer instead of generic summary, got %#v", unsupportedResult)
+	}
+
+	a2aAuthResponse, err := http.Post(
+		httpServer.URL+"/v1/a2a/messages",
+		"application/json",
+		strings.NewReader(`{"tenant_id":"default","message":"Did john fail auth before connecting?","filters":{"subscriber_id":"john"},"max_steps":4}`),
+	)
+	if err != nil {
+		t.Fatalf("POST /v1/a2a/messages auth error = %v", err)
+	}
+	defer a2aAuthResponse.Body.Close()
+	if a2aAuthResponse.StatusCode != http.StatusOK {
+		t.Fatalf("a2a auth status = %d, want %d", a2aAuthResponse.StatusCode, http.StatusOK)
+	}
+
+	var a2aAuthResult struct {
+		Type        string `json:"type"`
+		Message     string `json:"message"`
+		ShortAnswer string `json:"short_answer"`
+		RunStatus   string `json:"run_status"`
+		Steps       []struct {
+			ToolName string `json:"tool_name"`
+			Summary  string `json:"summary"`
+		} `json:"steps"`
+	}
+	if err := json.NewDecoder(a2aAuthResponse.Body).Decode(&a2aAuthResult); err != nil {
+		t.Fatalf("decode a2a auth response: %v", err)
+	}
+	if a2aAuthResult.Type != "assistant_message" || a2aAuthResult.RunStatus != "completed" {
+		t.Fatalf("expected completed a2a auth response, got %#v", a2aAuthResult)
+	}
+	if len(a2aAuthResult.Steps) != 4 {
+		t.Fatalf("expected full four-step cross-source a2a route, got %#v", a2aAuthResult)
+	}
+	if !strings.Contains(a2aAuthResult.Message, "later accepted") {
+		t.Fatalf("expected correlated auth answer from a2a, got %#v", a2aAuthResult)
+	}
+
+	a2aStatusResponse, err := http.Post(
+		httpServer.URL+"/v1/a2a/messages",
+		"application/json",
+		strings.NewReader(`{"tenant_id":"default","message":"How is John?","filters":{"subscriber_id":"john"},"max_steps":4}`),
+	)
+	if err != nil {
+		t.Fatalf("POST /v1/a2a/messages status error = %v", err)
+	}
+	defer a2aStatusResponse.Body.Close()
+	if a2aStatusResponse.StatusCode != http.StatusOK {
+		t.Fatalf("a2a status status = %d, want %d", a2aStatusResponse.StatusCode, http.StatusOK)
+	}
+
+	var a2aStatusResult struct {
+		Type        string `json:"type"`
+		ShortAnswer string `json:"short_answer"`
+		RunStatus   string `json:"run_status"`
+		Steps       []struct {
+			ToolName string `json:"tool_name"`
+			Summary  string `json:"summary"`
+		} `json:"steps"`
+	}
+	if err := json.NewDecoder(a2aStatusResponse.Body).Decode(&a2aStatusResult); err != nil {
+		t.Fatalf("decode a2a status response: %v", err)
+	}
+	if a2aStatusResult.Type != "assistant_message" || a2aStatusResult.RunStatus != "completed" {
+		t.Fatalf("expected completed a2a status response, got %#v", a2aStatusResult)
+	}
+	if !strings.HasPrefix(a2aStatusResult.ShortAnswer, "Subscriber john is not currently connected") {
+		t.Fatalf("expected concise a2a status answer, got %#v", a2aStatusResult)
+	}
+	if len(a2aStatusResult.Steps) != 3 || a2aStatusResult.Steps[0].ToolName != "query.sessions.search" {
+		t.Fatalf("expected lighter three-step a2a status route, got %#v", a2aStatusResult)
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	agentmetadata "github.com/asimarora/semantic-intelligence-layer/internal/storage/metadata/agents"
 	retrievalmetadata "github.com/asimarora/semantic-intelligence-layer/internal/storage/metadata/retrieval"
 	sessionmetadata "github.com/asimarora/semantic-intelligence-layer/internal/storage/metadata/sessions"
+	a2atransport "github.com/asimarora/semantic-intelligence-layer/internal/transport/a2a"
 	chattransport "github.com/asimarora/semantic-intelligence-layer/internal/transport/chat"
 	"github.com/asimarora/semantic-intelligence-layer/internal/transport/webhook"
 )
@@ -85,6 +86,16 @@ func NewServer(cfg *silconfig.Config, logger *slog.Logger) (*http.Server, error)
 		})
 	}
 	registerChatRoutes(mux, logger, chatHandler, chatInitErr)
+
+	var a2aHandler *a2atransport.Handler
+	a2aInitErr := agentInitErr
+	if a2aInitErr == nil {
+		a2aHandler, a2aInitErr = a2atransport.NewHandler(a2atransport.Dependencies{
+			Logger:  logger,
+			Harness: agentService,
+		})
+	}
+	registerA2ARoutes(mux, logger, a2aHandler, a2aInitErr)
 
 	if err := webhook.Register(mux, logger, registry, int64(cfg.Channels.RequestBodyLimitBytes)); err != nil {
 		return nil, err

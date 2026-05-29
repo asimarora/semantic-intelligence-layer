@@ -1,4 +1,4 @@
-// Package a2a contains future agent-to-agent transport adapters that expose
-// SIL capabilities to external orchestrators or peer systems without moving
-// core intelligence logic out of shared services.
+// Package a2a contains agent-to-agent transport adapters that expose SIL's
+// shared deterministic investigation core to external orchestrators without
+// moving reasoning logic out of the harness.
 package a2a

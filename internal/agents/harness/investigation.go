@@ -66,6 +66,14 @@ type Service struct {
 	plannerName string
 }
 
+type investigationPhase string
+
+const (
+	investigationPhaseRetrieve investigationPhase = "retrieve"
+	investigationPhaseAccess   investigationPhase = "access"
+	investigationPhaseSessions investigationPhase = "sessions"
+)
+
 func NewService(deps Dependencies) (*Service, error) {
 	if deps.Runs == nil {
 		return nil, fmt.Errorf("agent run store is required")
@@ -150,52 +158,58 @@ func (service *Service) RunInvestigation(ctx context.Context, request agenttypes
 	logger := service.logger().With("run_id", run.ID, "tenant_id", run.TenantID, "goal", run.Goal)
 	logger.Info("starting investigation run")
 
-	hits, retrievalStep, resultErr := service.runRetrievalStep(ctx, &record, request)
-	if resultErr != nil {
-		return service.finishRunWithError(ctx, record, retrievalStep, resultErr)
-	}
-	record.Steps = append(record.Steps, retrievalStep)
-	record.Run.UpdatedAt = completedAt(retrievalStep)
-	if err := service.runs.Upsert(ctx, record); err != nil {
-		return record, err
-	}
-
 	var (
+		hits          []retrievalcontracts.Hit
 		accessEvents  []unifiedaccess.Event
 		accessStep    agenttypes.Step
 		sessionEvents []unifiedsessions.Event
 		sessionStep   agenttypes.Step
 	)
-	remainingSteps := request.MaxSteps - 1
-	runSummary := remainingSteps > 0
-	enrichmentBudget := remainingSteps
+	runSummary := request.MaxSteps > 1
+	evidenceBudget := request.MaxSteps
 	if runSummary {
-		enrichmentBudget--
+		evidenceBudget--
 	}
 
-	if enrichmentBudget > 0 && service.access != nil {
-		accessEvents, accessStep, resultErr = service.runAccessStep(ctx, &record, request, hits)
-		if resultErr != nil {
-			return service.finishRunWithError(ctx, record, accessStep, resultErr)
+	for _, phase := range buildInvestigationPlan(request, service.access != nil, service.sessions != nil) {
+		if evidenceBudget == 0 {
+			break
 		}
-		record.Steps = append(record.Steps, accessStep)
-		record.Run.UpdatedAt = completedAt(accessStep)
+
+		switch phase {
+		case investigationPhaseRetrieve:
+			var retrievalStep agenttypes.Step
+			var resultErr error
+			hits, retrievalStep, resultErr = service.runRetrievalStep(ctx, &record, request)
+			if resultErr != nil {
+				return service.finishRunWithError(ctx, record, retrievalStep, resultErr)
+			}
+			record.Steps = append(record.Steps, retrievalStep)
+			record.Run.UpdatedAt = completedAt(retrievalStep)
+		case investigationPhaseAccess:
+			var resultErr error
+			accessEvents, accessStep, resultErr = service.runAccessStep(ctx, &record, request, hits)
+			if resultErr != nil {
+				return service.finishRunWithError(ctx, record, accessStep, resultErr)
+			}
+			record.Steps = append(record.Steps, accessStep)
+			record.Run.UpdatedAt = completedAt(accessStep)
+		case investigationPhaseSessions:
+			var resultErr error
+			sessionEvents, sessionStep, resultErr = service.runSessionStep(ctx, &record, request, hits)
+			if resultErr != nil {
+				return service.finishRunWithError(ctx, record, sessionStep, resultErr)
+			}
+			record.Steps = append(record.Steps, sessionStep)
+			record.Run.UpdatedAt = completedAt(sessionStep)
+		default:
+			continue
+		}
+
 		if err := service.runs.Upsert(ctx, record); err != nil {
 			return record, err
 		}
-		enrichmentBudget--
-	}
-
-	if enrichmentBudget > 0 && service.sessions != nil {
-		sessionEvents, sessionStep, resultErr = service.runSessionStep(ctx, &record, request, hits)
-		if resultErr != nil {
-			return service.finishRunWithError(ctx, record, sessionStep, resultErr)
-		}
-		record.Steps = append(record.Steps, sessionStep)
-		record.Run.UpdatedAt = completedAt(sessionStep)
-		if err := service.runs.Upsert(ctx, record); err != nil {
-			return record, err
-		}
+		evidenceBudget--
 	}
 
 	if runSummary {
@@ -217,6 +231,83 @@ func (service *Service) RunInvestigation(ctx context.Context, request agenttypes
 
 	logger.Info("investigation run completed", "steps", len(record.Steps))
 	return record, nil
+}
+
+func buildInvestigationPlan(request agenttypes.RunRequest, accessAvailable, sessionAvailable bool) []investigationPhase {
+	normalizedGoal := strings.ToLower(strings.TrimSpace(request.Goal))
+	hasStructuredSelectors := hasStructuredLookupSelectors(request.Inputs)
+
+	var phases []investigationPhase
+	switch {
+	case isBeforeConnectQuestion(normalizedGoal):
+		phases = orderedAvailablePhases(accessAvailable, sessionAvailable,
+			investigationPhaseRetrieve,
+			investigationPhaseAccess,
+			investigationPhaseSessions,
+		)
+	case isStatusQuestion(normalizedGoal) && hasStructuredSelectors:
+		phases = orderedAvailablePhases(accessAvailable, sessionAvailable,
+			investigationPhaseSessions,
+			investigationPhaseAccess,
+		)
+	case isTenantMembershipQuestion(normalizedGoal) && hasStructuredSelectors:
+		phases = orderedAvailablePhases(accessAvailable, sessionAvailable,
+			investigationPhaseRetrieve,
+		)
+	case isDisconnectReasonQuestion(normalizedGoal) && hasStructuredSelectors:
+		phases = orderedAvailablePhases(accessAvailable, sessionAvailable,
+			investigationPhaseSessions,
+		)
+	default:
+		phases = orderedAvailablePhases(accessAvailable, sessionAvailable,
+			investigationPhaseRetrieve,
+			investigationPhaseAccess,
+			investigationPhaseSessions,
+		)
+	}
+
+	if len(phases) == 0 {
+		return []investigationPhase{investigationPhaseRetrieve}
+	}
+	return phases
+}
+
+func orderedAvailablePhases(accessAvailable, sessionAvailable bool, phases ...investigationPhase) []investigationPhase {
+	ordered := make([]investigationPhase, 0, len(phases))
+	seen := make(map[investigationPhase]struct{}, len(phases))
+	for _, phase := range phases {
+		if _, exists := seen[phase]; exists {
+			continue
+		}
+		switch phase {
+		case investigationPhaseAccess:
+			if !accessAvailable {
+				continue
+			}
+		case investigationPhaseSessions:
+			if !sessionAvailable {
+				continue
+			}
+		}
+		seen[phase] = struct{}{}
+		ordered = append(ordered, phase)
+	}
+	return ordered
+}
+
+func hasStructuredLookupSelectors(inputs map[string]string) bool {
+	for _, key := range []string{
+		inputKeySubscriberID,
+		inputKeySessionID,
+		inputKeyRequestID,
+		inputKeyNASIPAddress,
+		inputKeyClientIP,
+	} {
+		if strings.TrimSpace(inputs[key]) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func (service *Service) runRetrievalStep(ctx context.Context, record *agentmetadata.Record, request agenttypes.RunRequest) ([]retrievalcontracts.Hit, agenttypes.Step, error) {

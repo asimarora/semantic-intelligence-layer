@@ -426,17 +426,20 @@ func TestServiceRunInvestigationCorrelatesAccessAndSessionTimeline(t *testing.T)
 	if err != nil {
 		t.Fatalf("RunInvestigation() status question error = %v", err)
 	}
-	if len(statusRecord.Steps) != 4 {
-		t.Fatalf("expected 4 steps for status question, got %d", len(statusRecord.Steps))
+	if len(statusRecord.Steps) != 3 {
+		t.Fatalf("expected 3 steps for status question, got %d", len(statusRecord.Steps))
 	}
-	if !strings.HasPrefix(statusRecord.Steps[3].Summary, "Subscriber john is not currently connected in the current investigation window.") {
-		t.Fatalf("expected concise status summary, got %q", statusRecord.Steps[3].Summary)
+	if statusRecord.Steps[0].ToolName != "query.sessions.search" {
+		t.Fatalf("expected status question to start with session enrichment, got %q", statusRecord.Steps[0].ToolName)
 	}
-	if strings.HasPrefix(statusRecord.Steps[3].Summary, "Investigated goal") {
-		t.Fatalf("expected status answer instead of generic summary, got %q", statusRecord.Steps[3].Summary)
+	if statusRecord.Steps[1].ToolName != "query.access.search" {
+		t.Fatalf("expected status question to include access enrichment second, got %q", statusRecord.Steps[1].ToolName)
 	}
-	if !strings.Contains(statusRecord.Steps[0].Summary, `query "john session status connected disconnected latest"`) {
-		t.Fatalf("expected bounded status query rewrite, got %q", statusRecord.Steps[0].Summary)
+	if !strings.HasPrefix(statusRecord.Steps[2].Summary, "Subscriber john is not currently connected in the current investigation window.") {
+		t.Fatalf("expected concise status summary, got %q", statusRecord.Steps[2].Summary)
+	}
+	if strings.HasPrefix(statusRecord.Steps[2].Summary, "Investigated goal") {
+		t.Fatalf("expected status answer instead of generic summary, got %q", statusRecord.Steps[2].Summary)
 	}
 
 	tenantRecord, err := service.RunInvestigation(context.Background(), agenttypes.RunRequest{
@@ -449,14 +452,17 @@ func TestServiceRunInvestigationCorrelatesAccessAndSessionTimeline(t *testing.T)
 	if err != nil {
 		t.Fatalf("RunInvestigation() tenant question error = %v", err)
 	}
-	if len(tenantRecord.Steps) != 4 {
-		t.Fatalf("expected 4 steps for tenant question, got %d", len(tenantRecord.Steps))
+	if len(tenantRecord.Steps) != 2 {
+		t.Fatalf("expected 2 steps for tenant question, got %d", len(tenantRecord.Steps))
 	}
-	if !strings.HasPrefix(tenantRecord.Steps[3].Summary, "Yes. Subscriber john has evidence in this tenant.") {
-		t.Fatalf("expected tenant membership answer, got %q", tenantRecord.Steps[3].Summary)
+	if tenantRecord.Steps[0].ToolName != "retrieve.evidence.search" {
+		t.Fatalf("expected tenant question to stay retrieval-only, got %q", tenantRecord.Steps[0].ToolName)
 	}
-	if strings.HasPrefix(tenantRecord.Steps[3].Summary, "Investigated goal") {
-		t.Fatalf("expected tenant answer instead of generic summary, got %q", tenantRecord.Steps[3].Summary)
+	if !strings.HasPrefix(tenantRecord.Steps[1].Summary, "Yes. Subscriber john has evidence in this tenant.") {
+		t.Fatalf("expected tenant membership answer, got %q", tenantRecord.Steps[1].Summary)
+	}
+	if strings.HasPrefix(tenantRecord.Steps[1].Summary, "Investigated goal") {
+		t.Fatalf("expected tenant answer instead of generic summary, got %q", tenantRecord.Steps[1].Summary)
 	}
 	if !strings.Contains(tenantRecord.Steps[0].Summary, `query "john subscriber tenant membership"`) {
 		t.Fatalf("expected bounded tenant query rewrite, got %q", tenantRecord.Steps[0].Summary)

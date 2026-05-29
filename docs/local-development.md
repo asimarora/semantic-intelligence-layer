@@ -169,7 +169,15 @@ Or use the browser chat interface:
 http://127.0.0.1:8080/chat
 ```
 
-The WebSocket chat demo sends the question to the same deterministic investigation core used by `POST /v1/agent-runs`. The default form values are already set to the bundled `john` cross-source demo.
+Or hit the A2A HTTP surface directly:
+
+```bash
+curl -X POST "http://127.0.0.1:8080/v1/a2a/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"default","message":"How is John?","filters":{"subscriber_id":"john"},"max_steps":4}'
+```
+
+The WebSocket chat demo and A2A HTTP endpoint both send the question to the same deterministic investigation core used by `POST /v1/agent-runs`. The default chat form values are already set to the bundled `john` cross-source demo.
 
 The investigation harness now performs:
 
@@ -185,7 +193,13 @@ For the bundled fixtures, the expected summary is the timeline:
 3. session `sess-001` started at `13:58:20`
 4. session `sess-001` stopped at `14:00`
 
-This is the current **cross-source demo surface**. `POST /v1/agent-runs`, `/chat`, and `agentd` now reuse the same access-plus-session correlation core. The next gap is exposing that flow through an A2A transport and adding a lighter bounded question router above it.
+This is the current **cross-source demo surface**. `POST /v1/agent-runs`, `/chat`, `/v1/a2a/messages`, and `agentd` now reuse the same access-plus-session correlation core. Chat and A2A also route simple operator questions more lightly now:
+
+1. subscriber status questions go straight to normalized session plus access lookups
+2. tenant membership checks stay retrieval-backed
+3. disconnect questions can stay session-backed when the caller already supplies a grounded selector
+
+The next gap is moving retrieval beyond deterministic lexical matching toward embeddings plus hybrid ranking.
 
 ### `deployments/compose/local.yaml`
 
