@@ -1,0 +1,34 @@
+name: investigation-surfaces
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/investigation-surfaces.yml"
+      - "cmd/**"
+      - "internal/agents/**"
+      - "internal/services/query/**"
+      - "internal/storage/metadata/**"
+      - "internal/transport/**"
+      - "go.mod"
+      - "go.sum"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run focused investigation tests
+        run: go test ./internal/agents/harness ./internal/agents/runtime ./internal/transport/api

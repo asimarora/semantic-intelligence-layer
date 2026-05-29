@@ -73,33 +73,39 @@ Key code:
 - `agentd` currently runs as a **polling watcher daemon** for repeated short-session disconnect detection and now prioritizes subscribers with correlated access-plus-session evidence in the same window.
 - Local development uses **file-backed metadata** so separate processes can share projected state.
 - Development now enables both `radius` and `access` sources so a single local demo can seed cross-source evidence.
-- `apid` now serves a **WebSocket chat demo** at `/chat` backed by the same deterministic investigation core as `POST /v1/agent-runs`.
+- `apid` now serves a **WebSocket chat demo** at `/chat` and an **A2A HTTP endpoint** at `POST /v1/a2a/messages`, both backed by the same deterministic investigation core as `POST /v1/agent-runs`.
+- bounded operator questions no longer always pay the full investigation cost:
+  - status questions can route directly to normalized session plus access lookups
+  - tenant membership questions can stay retrieval-backed
+  - disconnect questions can stay session-backed when grounded selectors are already present
+- GitHub Actions can now run the main Go validation path plus focused investigation-surface smoke tests.
 
 ## Most important current gap
 
-**The harness, chat demo, and watcher daemon now share the same cross-source access-plus-session reasoning core, but the A2A layer and lighter bounded question routing still lag behind it.**
+**Cross-source reasoning now spans the harness, chat, A2A, and watcher daemon, but retrieval is still deterministic lexical search and source coverage is still narrow.**
 
 That means:
 
 - `POST /v1/retrieve` returns both session and access evidence, but ranking is still deterministic lexical retrieval
-- `POST /v1/agent-runs` now enriches directly from normalized access and normalized session stores, then produces a deterministic correlated summary for the current window
-- `/chat` now provides a browser-based WebSocket test interface over the same bounded investigation flow
-- `agentd` now enriches repeated short-session candidates with normalized access evidence and prioritizes subscribers whose access and session timelines correlate in the current window
+- `POST /v1/agent-runs`, `/chat`, and `POST /v1/a2a/messages` all share the same deterministic investigation harness
+- `agentd` enriches repeated short-session candidates with normalized access evidence and prioritizes subscribers whose access and session timelines correlate in the current window
+- the next quality jump is better retrieval ranking plus another telecom evidence source, not another interface split
 
 ## Best next task
 
 The best next implementation step is:
 
-1. expose the shared reasoning core through an A2A transport without splitting it by interface
-2. improve the bounded question layer so chat/A2A can answer common operator asks with lighter-weight routing when a full investigation is unnecessary
-3. move retrieval from deterministic lexical search toward embeddings plus hybrid ranking
+1. move retrieval from deterministic lexical search toward embeddings plus hybrid ranking
+2. add the next telecom source (DHCP is the most natural follow-on)
+3. start case memory / identity graph work once retrieval and source breadth improve
 
 Good starting files:
 
 - `internal/agents/harness/investigation.go`
-- `internal/agents/runtime/daemon.go`
-- `internal/transport/a2a/doc.go`
-- `internal/transport/chat/handler.go`
+- `internal/services/query/service.go`
+- `internal/storage/metadata/retrieval/store.go`
+- `internal/adapters`
+- `.github/workflows`
 
 ## Working rules for this repo
 
@@ -117,6 +123,12 @@ Good starting files:
 ```bash
 go test ./...
 go build ./...
+```
+
+Focused investigation validation:
+
+```bash
+go test ./internal/agents/harness ./internal/agents/runtime ./internal/transport/api
 ```
 
 ### RADIUS flow
@@ -151,6 +163,9 @@ curl -s -X POST "http://localhost:8080/v1/retrieve" \
 curl -s -X POST "http://localhost:8080/v1/agent-runs" \
   -H "Content-Type: application/json" \
   -d '{"tenant_id":"default","goal":"Did john fail auth before connecting?","query":"john invalid password then connected","filters":{"subscriber_id":"john"},"max_steps":4}'
+curl -s -X POST "http://localhost:8080/v1/a2a/messages" \
+  -H "Content-Type: application/json" \
+  -d '{"tenant_id":"default","message":"How is John?","filters":{"subscriber_id":"john"},"max_steps":4}'
 open http://localhost:8080/chat
 ```
 
@@ -172,4 +187,5 @@ If resuming work after a gap, assume the repo is currently at:
 
 - RADIUS accounting: indexed + retrievable + agent-consumable
 - AAA auth/access: normalized + projected + indexed + retrievable + agent-consumable
-- next milestone: **correlate access auth evidence with session outcomes inside the harness**
+- cross-source reasoning: shared across `POST /v1/agent-runs`, `/chat`, `POST /v1/a2a/messages`, and `agentd`
+- next milestone: **improve retrieval quality with embeddings plus hybrid ranking**

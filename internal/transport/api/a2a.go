@@ -23,9 +23,6 @@ func registerA2ARoutes(mux *http.ServeMux, logger *slog.Logger, handler *a2atran
 			writeAPIError(w, http.StatusServiceUnavailable, fmt.Errorf("a2a interface is not configured"))
 			return
 		}
-		if logger != nil {
-			logger.Info("handling a2a message")
-		}
 		handler.ServeMessage(w, r)
 	})
 }

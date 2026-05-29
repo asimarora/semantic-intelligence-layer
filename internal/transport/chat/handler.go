@@ -103,7 +103,7 @@ func (handler *Handler) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := handler.writeMessage(connection, assistanttransport.MessageResponse{
 			Type:      "status",
-			Message:   "Running deterministic investigation against indexed, access, and session evidence...",
+			Message:   "Running deterministic investigation against the current evidence...",
 			Goal:      request.Goal,
 			Timestamp: time.Now().UTC().Format(time.RFC3339Nano),
 		}); err != nil {
