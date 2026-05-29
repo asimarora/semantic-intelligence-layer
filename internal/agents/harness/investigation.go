@@ -525,14 +525,14 @@ func buildAccessQueries(request agenttypes.RunRequest, hits []retrievalcontracts
 	if baseQuery.SubscriberID == "" {
 		baseQuery.SubscriberID = firstHitSubscriberID(hits)
 	}
-	if baseQuery.SessionID == "" {
-		baseQuery.SessionID = firstHitSessionID(hits)
-	}
 	if baseQuery.NASIPAddress == "" {
 		baseQuery.NASIPAddress = firstHitNASIPAddress(hits)
 	}
 	if baseQuery.ClientIPAddress == "" {
 		baseQuery.ClientIPAddress = firstHitClientIPAddress(hits)
+	}
+	if baseQuery.SessionID == "" && baseQuery.RequestID == "" && baseQuery.SubscriberID == "" && baseQuery.NASIPAddress == "" && baseQuery.ClientIPAddress == "" {
+		baseQuery.SessionID = firstHitSessionID(hits)
 	}
 	if baseQuery.RequestID == "" && baseQuery.SubscriberID == "" && baseQuery.SessionID == "" && baseQuery.NASIPAddress == "" && baseQuery.ClientIPAddress == "" {
 		baseQuery.RequestID = firstHitRequestID(hits)
@@ -570,6 +570,9 @@ func buildSessionQueries(request agenttypes.RunRequest, hits []retrievalcontract
 	}
 
 	sessionIDs := topSessionIDs(hits, maxSessionLookups)
+	if baseQuery.SubscriberID != "" || baseQuery.NASIPAddress != "" || baseQuery.ClientIPAddress != "" {
+		sessionIDs = nil
+	}
 	if len(sessionIDs) == 0 && baseQuery.SessionID != "" {
 		sessionIDs = append(sessionIDs, baseQuery.SessionID)
 	}
@@ -695,7 +698,7 @@ func summarizeSessionStep(events []unifiedsessions.Event) string {
 func summarizeInvestigation(goal string, hits []retrievalcontracts.Hit, accessEvents []unifiedaccess.Event, sessionEvents []unifiedsessions.Event) string {
 	if directAnswer := summarizeGoalAnswer(goal, hits, accessEvents, sessionEvents); directAnswer != "" {
 		parts := []string{directAnswer}
-		if correlationSummary := summarizeCrossSourceCorrelation(accessEvents, sessionEvents); correlationSummary != "" {
+		if correlationSummary := SummarizeCrossSourceCorrelation(accessEvents, sessionEvents); correlationSummary != "" {
 			parts = append(parts, correlationSummary)
 		}
 		if accessSummary := summarizeAccessTimeline(accessEvents); accessSummary != "" {
@@ -733,7 +736,7 @@ func summarizeInvestigation(goal string, hits []retrievalcontracts.Hit, accessEv
 	} else {
 		parts = append(parts, "No normalized session context was available for further enrichment.")
 	}
-	if correlationSummary := summarizeCrossSourceCorrelation(accessEvents, sessionEvents); correlationSummary != "" {
+	if correlationSummary := SummarizeCrossSourceCorrelation(accessEvents, sessionEvents); correlationSummary != "" {
 		parts = append(parts, correlationSummary)
 	}
 	return strings.Join(parts, " ")
@@ -1113,7 +1116,8 @@ func summarizeSessionTimeline(events []unifiedsessions.Event) string {
 	return "Session timeline shows " + strings.Join(segments, ", then ") + "."
 }
 
-func summarizeCrossSourceCorrelation(accessEvents []unifiedaccess.Event, sessionEvents []unifiedsessions.Event) string {
+// SummarizeCrossSourceCorrelation explains the strongest deterministic access-to-session timeline finding.
+func SummarizeCrossSourceCorrelation(accessEvents []unifiedaccess.Event, sessionEvents []unifiedsessions.Event) string {
 	if len(accessEvents) == 0 && len(sessionEvents) == 0 {
 		return ""
 	}

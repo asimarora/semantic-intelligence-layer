@@ -185,7 +185,7 @@ For the bundled fixtures, the expected summary is the timeline:
 3. session `sess-001` started at `13:58:20`
 4. session `sess-001` stopped at `14:00`
 
-This is the current **cross-source demo surface**. The next gap is reusing the same correlation logic in watcher rules and adding an A2A transport over the same reasoning core.
+This is the current **cross-source demo surface**. `POST /v1/agent-runs`, `/chat`, and `agentd` now reuse the same access-plus-session correlation core. The next gap is exposing that flow through an A2A transport and adding a lighter bounded question router above it.
 
 ### `deployments/compose/local.yaml`
 

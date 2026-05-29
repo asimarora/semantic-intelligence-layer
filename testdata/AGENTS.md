@@ -70,29 +70,29 @@ Key code:
 - Retrieval is currently **deterministic lexical retrieval**, not vector-backed yet.
 - Retrieval uses `POST /v1/retrieve` for **read-only search** because the request body carries structured query filters.
 - The first agent flow is **deterministic and read-only**.
-- `agentd` currently runs as a **polling watcher daemon** for repeated short-session disconnect detection.
+- `agentd` currently runs as a **polling watcher daemon** for repeated short-session disconnect detection and now prioritizes subscribers with correlated access-plus-session evidence in the same window.
 - Local development uses **file-backed metadata** so separate processes can share projected state.
 - Development now enables both `radius` and `access` sources so a single local demo can seed cross-source evidence.
 - `apid` now serves a **WebSocket chat demo** at `/chat` backed by the same deterministic investigation core as `POST /v1/agent-runs`.
 
 ## Most important current gap
 
-**The harness can now correlate access and session timelines and the chat demo can exercise it, but watcher and A2A layers still lag behind that reasoning core.**
+**The harness, chat demo, and watcher daemon now share the same cross-source access-plus-session reasoning core, but the A2A layer and lighter bounded question routing still lag behind it.**
 
 That means:
 
 - `POST /v1/retrieve` returns both session and access evidence, but ranking is still deterministic lexical retrieval
 - `POST /v1/agent-runs` now enriches directly from normalized access and normalized session stores, then produces a deterministic correlated summary for the current window
 - `/chat` now provides a browser-based WebSocket test interface over the same bounded investigation flow
-- `agentd` still triggers on session-only repeated short disconnect logic rather than the richer cross-source patterns now available in the harness
+- `agentd` now enriches repeated short-session candidates with normalized access evidence and prioritizes subscribers whose access and session timelines correlate in the current window
 
 ## Best next task
 
 The best next implementation step is:
 
-1. reuse the harness correlation logic inside watcher rules
-2. expose that same shared reasoning core through an A2A transport without splitting it by interface
-3. improve the bounded question layer so chat/A2A can answer common operator asks with lighter-weight routing when a full investigation is unnecessary
+1. expose the shared reasoning core through an A2A transport without splitting it by interface
+2. improve the bounded question layer so chat/A2A can answer common operator asks with lighter-weight routing when a full investigation is unnecessary
+3. move retrieval from deterministic lexical search toward embeddings plus hybrid ranking
 
 Good starting files:
 

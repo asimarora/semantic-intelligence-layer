@@ -117,6 +117,7 @@ func run(ctx context.Context, args []string, stderr io.Writer) error {
 		Logger:       logRuntime.Logger,
 		Harness:      harnessService,
 		Sessions:     sessionService,
+		Access:       accessService,
 		WatcherState: watcherStateStore,
 	})
 	if err != nil {

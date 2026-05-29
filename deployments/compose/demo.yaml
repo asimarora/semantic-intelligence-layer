@@ -1,0 +1,22 @@
+name: sil-demo
+
+services:
+  demo:
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile.demo
+    environment:
+      SIL_APP_ENV: development
+      SIL_CONFIG_DIR: /app/configs
+      SIL_API_LISTEN_ADDR: ":8080"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -qO-
+        - http://127.0.0.1:8080/v1/sessions?tenant_id=default&subscriber_id=john
+      interval: 5s
+      timeout: 3s
+      retries: 10

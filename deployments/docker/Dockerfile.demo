@@ -1,0 +1,28 @@
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/bin/ingestd ./cmd/ingestd && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/bin/normalized ./cmd/normalized && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/bin/indexerd ./cmd/indexerd && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/bin/apid ./cmd/apid
+
+FROM alpine:3.20
+
+WORKDIR /app
+
+COPY --from=builder /out/bin /app/bin
+COPY configs /app/configs
+COPY testdata /app/testdata
+COPY deployments/docker/demo-entrypoint.sh /app/demo-entrypoint.sh
+
+RUN chmod +x /app/demo-entrypoint.sh
+
+ENV SIL_CONFIG_DIR=/app/configs
+
+ENTRYPOINT ["/app/demo-entrypoint.sh"]

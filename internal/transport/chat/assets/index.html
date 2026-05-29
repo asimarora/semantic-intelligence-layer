@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SIL Chat Demo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      background: #0f172a;
+    }
+    button, input, textarea {
+      font: inherit;
+    }
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      gap: 20px;
+    }
+    .panel {
+      background: #111827;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    h1, h2 {
+      margin: 0 0 12px;
+    }
+    p {
+      margin: 0 0 12px;
+      line-height: 1.5;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #1e293b;
+      font-size: 14px;
+    }
+    .status.online {
+      background: #14532d;
+    }
+    .status.offline {
+      background: #7f1d1d;
+    }
+    .fields {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-bottom: 16px;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+    input, textarea, button {
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 12px;
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+    }
+    button {
+      cursor: pointer;
+      background: #2563eb;
+      border-color: #2563eb;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #1e293b;
+      border-color: #475569;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .summary-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    .summary-value {
+      min-height: 88px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      padding: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .muted {
+      color: #94a3b8;
+    }
+    .tab-list {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .tab-button {
+      background: #1e293b;
+      border-color: #475569;
+    }
+    .tab-button.active {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+    .tab-panel[hidden] {
+      display: none;
+    }
+    .chat-log {
+      display: grid;
+      gap: 12px;
+      min-height: 220px;
+    }
+    .bubble {
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+    .bubble.user {
+      background: #1d4ed8;
+      border-color: #2563eb;
+    }
+    .bubble.assistant {
+      background: #172554;
+      border-color: #3730a3;
+    }
+    .bubble.system {
+      background: #0f172a;
+      border-color: #475569;
+    }
+    .bubble.error {
+      background: #7f1d1d;
+      border-color: #b91c1c;
+    }
+    .bubble .meta {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+    .detail-card + .detail-card {
+      margin-top: 20px;
+    }
+    .detail-copy {
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      padding: 14px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+    .trace-list {
+      margin: 0;
+      padding-left: 22px;
+      display: grid;
+      gap: 12px;
+    }
+    .trace-item {
+      border-radius: 12px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      padding: 12px 14px;
+    }
+    .trace-item .meta {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+    .trace-item .summary {
+      line-height: 1.4;
+    }
+    code {
+      background: #020617;
+      border-radius: 6px;
+      padding: 2px 6px;
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h1>SIL Chat Demo</h1>
+          <p>Use this WebSocket chat surface to exercise the current deterministic investigation core. The best first prompt is <code>Did john fail auth before connecting?</code>.</p>
+        </div>
+        <div id="connection-status" class="status offline">Disconnected</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Ask a question</h2>
+      <div class="fields">
+        <label>Tenant ID
+          <input id="tenant-id" value="default">
+        </label>
+        <label>Subscriber ID
+          <input id="subscriber-id" value="john">
+        </label>
+        <label>Session ID
+          <input id="session-id" value="">
+        </label>
+        <label>Request ID
+          <input id="request-id" value="">
+        </label>
+        <label>Outcome
+          <input id="outcome" value="">
+        </label>
+        <label>Max Steps
+          <input id="max-steps" type="number" min="4" max="5" value="4">
+        </label>
+      </div>
+      <label>Question
+        <textarea id="message">Did john fail auth before connecting?</textarea>
+      </label>
+      <div class="actions">
+        <button id="send-button" type="button">Send</button>
+        <button id="reconnect-button" type="button" class="secondary">Reconnect</button>
+      </div>
+    </section>
+
+    <section class="summary-grid">
+      <section class="panel">
+        <h2>Question</h2>
+        <div id="current-question" class="summary-value muted">No question sent yet.</div>
+      </section>
+      <section class="panel">
+        <h2>Short answer</h2>
+        <div id="short-answer" class="summary-value muted">No answer yet.</div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <div class="tab-list" role="tablist" aria-label="Chat views">
+        <button id="conversation-tab-button" class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="conversation-panel" data-tab-target="conversation">Conversation</button>
+        <button id="details-tab-button" class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="details-panel" data-tab-target="details">Details</button>
+      </div>
+
+      <div id="conversation-panel" class="tab-panel" role="tabpanel" aria-labelledby="conversation-tab-button" data-tab-panel="conversation">
+        <div id="conversation-log" class="chat-log"></div>
+      </div>
+
+      <div id="details-panel" class="tab-panel" role="tabpanel" aria-labelledby="details-tab-button" data-tab-panel="details" hidden>
+        <div class="detail-card">
+          <h2>Full explanation</h2>
+          <div id="detail-message" class="detail-copy muted">No explanation yet.</div>
+        </div>
+        <div class="detail-card">
+          <h2>Trace</h2>
+          <ol id="detail-steps" class="trace-list"></ol>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const conversationLog = document.getElementById("conversation-log");
+    const statusEl = document.getElementById("connection-status");
+    const sendButton = document.getElementById("send-button");
+    const reconnectButton = document.getElementById("reconnect-button");
+    const maxStepsInput = document.getElementById("max-steps");
+    const messageInput = document.getElementById("message");
+    const currentQuestionEl = document.getElementById("current-question");
+    const shortAnswerEl = document.getElementById("short-answer");
+    const detailMessageEl = document.getElementById("detail-message");
+    const detailStepsEl = document.getElementById("detail-steps");
+    const tabButtons = Array.from(document.querySelectorAll("[data-tab-target]"));
+    const tabPanels = Array.from(document.querySelectorAll("[data-tab-panel]"));
+    let socket;
+
+    function wsURL() {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      return `${protocol}//${window.location.host}/v1/chat/ws`;
+    }
+
+    function setStatus(text, online) {
+      statusEl.textContent = text;
+      statusEl.className = `status ${online ? "online" : "offline"}`;
+    }
+
+    function setCurrentQuestion(text) {
+      const value = (text || "").trim();
+      if (!value) {
+        currentQuestionEl.textContent = "No question sent yet.";
+        currentQuestionEl.classList.add("muted");
+        return;
+      }
+      currentQuestionEl.textContent = value;
+      currentQuestionEl.classList.remove("muted");
+    }
+
+    function setShortAnswer(text, muted) {
+      const value = (text || "").trim();
+      if (!value) {
+        shortAnswerEl.textContent = "No answer yet.";
+        shortAnswerEl.classList.add("muted");
+        return;
+      }
+      shortAnswerEl.textContent = value;
+      shortAnswerEl.classList.toggle("muted", Boolean(muted));
+    }
+
+    function appendConversationBubble(kind, title, message) {
+      const bubble = document.createElement("div");
+      bubble.className = `bubble ${kind}`;
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = title;
+      bubble.appendChild(meta);
+
+      const body = document.createElement("div");
+      body.textContent = message;
+      bubble.appendChild(body);
+
+      conversationLog.appendChild(bubble);
+    }
+
+    function renderTrace(steps) {
+      detailStepsEl.replaceChildren();
+      if (!Array.isArray(steps) || steps.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "trace-item muted";
+        empty.textContent = "No trace yet.";
+        detailStepsEl.appendChild(empty);
+        return;
+      }
+      steps.forEach((step, index) => {
+        const item = document.createElement("li");
+        item.className = "trace-item";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `${index + 1}. ${step.tool_name} (${step.status || "unknown"})`;
+        item.appendChild(meta);
+
+        const summary = document.createElement("div");
+        summary.className = "summary";
+        summary.textContent = step.summary || "No summary returned.";
+        item.appendChild(summary);
+
+        detailStepsEl.appendChild(item);
+      });
+    }
+
+    function renderDetails(message, steps) {
+      const detailText = (message || "").trim();
+      if (!detailText) {
+        detailMessageEl.textContent = "No explanation yet.";
+        detailMessageEl.classList.add("muted");
+      } else {
+        detailMessageEl.textContent = detailText;
+        detailMessageEl.classList.remove("muted");
+      }
+      renderTrace(steps);
+    }
+
+    function extractShortAnswer(text) {
+      const value = (text || "").trim();
+      if (!value) {
+        return "";
+      }
+      const sentences = value.match(/[^.!?]+[.!?]+/g) || [value];
+      const first = (sentences[0] || "").trim();
+      if ((first === "Yes." || first === "No." || first === "Partially.") && sentences.length > 1) {
+        return `${first} ${(sentences[1] || "").trim()}`.trim();
+      }
+      return first || value;
+    }
+
+    function showTab(name) {
+      tabButtons.forEach((button) => {
+        const active = button.dataset.tabTarget === name;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      tabPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.tabPanel !== name;
+      });
+    }
+
+    function connect() {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        return;
+      }
+
+      socket = new WebSocket(wsURL());
+      setStatus("Connecting...", false);
+
+      socket.addEventListener("open", () => setStatus("Connected", true));
+      socket.addEventListener("close", () => setStatus("Disconnected", false));
+      socket.addEventListener("error", () => setStatus("Connection error", false));
+      socket.addEventListener("message", (event) => {
+        const payload = JSON.parse(event.data);
+        switch (payload.type) {
+          case "welcome":
+            appendConversationBubble("system", "connected", payload.message || "");
+            break;
+          case "status":
+            setShortAnswer("Working on the latest question...", true);
+            appendConversationBubble("system", "working", payload.message || "");
+            break;
+          case "user_message":
+            setCurrentQuestion(payload.goal || payload.message || "");
+            setShortAnswer("Waiting for answer...", true);
+            appendConversationBubble("user", "you", payload.message || "");
+            showTab("conversation");
+            break;
+          case "assistant_message":
+            setCurrentQuestion(payload.goal || payload.message || "");
+            setShortAnswer(payload.short_answer || extractShortAnswer(payload.message || ""), false);
+            appendConversationBubble("assistant", "assistant", payload.short_answer || extractShortAnswer(payload.message || ""));
+            renderDetails(payload.message || payload.short_answer || "", payload.steps || []);
+            break;
+          case "error":
+            setShortAnswer(payload.short_answer || payload.error || "Unknown chat error", false);
+            appendConversationBubble("error", "error", payload.error || payload.message || "Unknown chat error");
+            renderDetails(payload.message || payload.error || "Unknown chat error", payload.steps || []);
+            showTab("details");
+            break;
+          default:
+            appendConversationBubble("system", payload.type || "event", payload.message || JSON.stringify(payload));
+        }
+      });
+    }
+
+    function sendMessage() {
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        appendConversationBubble("error", "error", "Socket is not connected. Reconnect and try again.");
+        return;
+      }
+
+      const maxStepsValue = Number.parseInt(maxStepsInput.value, 10);
+      const boundedMaxSteps = Number.isNaN(maxStepsValue) ? 4 : Math.max(4, Math.min(5, maxStepsValue));
+      maxStepsInput.value = String(boundedMaxSteps);
+      setCurrentQuestion(messageInput.value);
+      setShortAnswer("Waiting for answer...", true);
+      socket.send(JSON.stringify({
+        type: "ask",
+        tenant_id: document.getElementById("tenant-id").value,
+        message: messageInput.value,
+        max_steps: boundedMaxSteps,
+        filters: {
+          subscriber_id: document.getElementById("subscriber-id").value,
+          session_id: document.getElementById("session-id").value,
+          request_id: document.getElementById("request-id").value,
+          outcome: document.getElementById("outcome").value
+        }
+      }));
+    }
+
+    if (Number.parseInt(maxStepsInput.value, 10) < 4) {
+      maxStepsInput.value = "4";
+    }
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => showTab(button.dataset.tabTarget));
+    });
+    messageInput.addEventListener("input", () => setCurrentQuestion(messageInput.value));
+
+    setCurrentQuestion(messageInput.value);
+    setShortAnswer("", true);
+    renderDetails("", []);
+    showTab("conversation");
+    sendButton.addEventListener("click", sendMessage);
+    reconnectButton.addEventListener("click", connect);
+    connect();
+  </script>
+</body>
+</html>

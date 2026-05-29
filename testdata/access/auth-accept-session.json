@@ -1,0 +1,14 @@
+{
+  "username": "john",
+  "request_id": "req-002",
+  "decision": "Access-Accept",
+  "nas_ip_address": "192.168.1.1",
+  "client_ip": "10.0.0.25",
+  "calling_station_id": "00-11-22-33-44-55",
+  "called_station_id": "bbng-01",
+  "packet_type": "Access-Accept",
+  "auth_protocol": "pap",
+  "policy_name": "broadband-default",
+  "acct_session_id": "sess-001",
+  "timestamp": "2026-05-05T13:58:00Z"
+}
